@@ -1,0 +1,173 @@
+{
+ "Resources": {
+  "HealthRecordsBucket28A5ADA9": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "BucketName": {
+     "Fn::Join": [
+      "",
+      [
+       "zyvia-health-records-",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       "-ap-southeast-2"
+      ]
+     ]
+    },
+    "LifecycleConfiguration": {
+     "Rules": [
+      {
+       "Id": "TransitionToIA",
+       "Status": "Enabled",
+       "Transitions": [
+        {
+         "StorageClass": "STANDARD_IA",
+         "TransitionInDays": 90
+        }
+       ]
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    },
+    "VersioningConfiguration": {
+     "Status": "Enabled"
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ZyviaStorage/HealthRecordsBucket/Resource"
+   }
+  },
+  "HealthRecordsBucketPolicy4D686535": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "HealthRecordsBucket28A5ADA9"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:GetObject",
+       "Condition": {
+        "StringNotEquals": {
+         "aws:PrincipalAccount": {
+          "Ref": "AWS::AccountId"
+         }
+        }
+       },
+       "Effect": "Deny",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "HealthRecordsBucket28A5ADA9",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       },
+       "Sid": "DenyPublicGetObject"
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaStorage/HealthRecordsBucket/Policy/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/zPSMzIx1DNQTCwv1k1OydbNyUzSqw4uSUzO1kksL44vNtardipNzk4t0XFOy4OyIFRAfk5mciVCGMKvBQn4l5YUlJbU6uTlp6TqZRXrlxla6BkZ6FkoZhVnZuoWleaVZOam6gVBaAC4GBo0ggAAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaStorage/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "HealthRecordsBucketName": {
+   "Description": "S3 bucket name for health records — set as OBJECT_STORE_BUCKET env var",
+   "Value": {
+    "Ref": "HealthRecordsBucket28A5ADA9"
+   }
+  },
+  "ExportsOutputFnGetAttHealthRecordsBucket28A5ADA9Arn94DC811F": {
+   "Value": {
+    "Fn::GetAtt": [
+     "HealthRecordsBucket28A5ADA9",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "ZyviaStorage:ExportsOutputFnGetAttHealthRecordsBucket28A5ADA9Arn94DC811F"
+   }
+  },
+  "ExportsOutputRefHealthRecordsBucket28A5ADA90F5E4B76": {
+   "Value": {
+    "Ref": "HealthRecordsBucket28A5ADA9"
+   },
+   "Export": {
+    "Name": "ZyviaStorage:ExportsOutputRefHealthRecordsBucket28A5ADA90F5E4B76"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

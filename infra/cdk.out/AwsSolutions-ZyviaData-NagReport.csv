@@ -1,0 +1,9 @@
+Rule ID,Resource ID,Compliance,Exception Reason,Rule Level,Rule Info
+"AwsSolutions-SMG4","ZyviaData/Database/Secret/Resource","Non-Compliant","N/A","Error","The secret does not have automatic rotation scheduled."
+"AwsSolutions-RDS2","ZyviaData/Database/Resource","Compliant","N/A","Error","The RDS instance or Aurora DB cluster does not have storage encryption enabled."
+"AwsSolutions-RDS3","ZyviaData/Database/Resource","Non-Compliant","N/A","Error","The non-Aurora RDS DB instance does not have multi-AZ support enabled."
+"AwsSolutions-RDS10","ZyviaData/Database/Resource","Compliant","N/A","Error","The RDS instance or Aurora DB cluster does not have deletion protection enabled."
+"AwsSolutions-RDS11","ZyviaData/Database/Resource","Non-Compliant","N/A","Error","The RDS instance or Aurora DB cluster uses the default endpoint port."
+"AwsSolutions-RDS13","ZyviaData/Database/Resource","Compliant","N/A","Error","The RDS instance is not configured for automated backups."
+"AwsSolutions-SMG4","ZyviaData/DatabaseUrlSecret/Resource","Non-Compliant","N/A","Error","The secret does not have automatic rotation scheduled."
+"AwsSolutions-SMG4","ZyviaData/JwtPublicKeySecret/Resource","Non-Compliant","N/A","Error","The secret does not have automatic rotation scheduled."

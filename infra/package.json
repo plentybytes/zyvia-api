@@ -1,0 +1,22 @@
+{
+  "name": "zyvia-infra",
+  "version": "1.0.0",
+  "description": "AWS CDK infrastructure for Zyvia API",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "cdk": "cdk"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.140.0",
+    "constructs": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "aws-cdk": "^2.140.0",
+    "cdk-nag": "^2.28.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.3"
+  }
+}

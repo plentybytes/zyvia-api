@@ -1,0 +1,260 @@
+{
+ "Resources": {
+  "AlertTopic2720D535": {
+   "Type": "AWS::SNS::Topic",
+   "Properties": {
+    "DisplayName": "Zyvia API Alerts",
+    "TopicName": "zyvia-alerts"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaObservability/AlertTopic/Resource"
+   }
+  },
+  "Http5xxAlarm2F844FC7": {
+   "Type": "AWS::CloudWatch::Alarm",
+   "Properties": {
+    "AlarmActions": [
+     {
+      "Ref": "AlertTopic2720D535"
+     }
+    ],
+    "AlarmDescription": "HTTP 5xx error rate from ECS target group > 5% over 5 minutes",
+    "AlarmName": "zyvia-api-5xx-rate",
+    "ComparisonOperator": "GreaterThanThreshold",
+    "EvaluationPeriods": 1,
+    "Metrics": [
+     {
+      "Expression": "(m1 / m2) * 100",
+      "Id": "expr_1",
+      "ReturnData": true
+     },
+     {
+      "Id": "m1",
+      "MetricStat": {
+       "Metric": {
+        "Dimensions": [
+         {
+          "Name": "TargetGroup",
+          "Value": {
+           "Fn::ImportValue": "ZyviaCompute:ExportsOutputFnGetAttTargetGroup3D7CD9B8TargetGroupFullName17844DE2"
+          }
+         }
+        ],
+        "MetricName": "HTTPCode_Target_5XX_Count",
+        "Namespace": "AWS/ApplicationELB"
+       },
+       "Period": 300,
+       "Stat": "Sum"
+      },
+      "ReturnData": false
+     },
+     {
+      "Id": "m2",
+      "MetricStat": {
+       "Metric": {
+        "Dimensions": [
+         {
+          "Name": "TargetGroup",
+          "Value": {
+           "Fn::ImportValue": "ZyviaCompute:ExportsOutputFnGetAttTargetGroup3D7CD9B8TargetGroupFullName17844DE2"
+          }
+         }
+        ],
+        "MetricName": "RequestCount",
+        "Namespace": "AWS/ApplicationELB"
+       },
+       "Period": 300,
+       "Stat": "Sum"
+      },
+      "ReturnData": false
+     }
+    ],
+    "Threshold": 5,
+    "TreatMissingData": "notBreaching"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaObservability/Http5xxAlarm/Resource"
+   }
+  },
+  "HealthyHostCountAlarmC274B2B6": {
+   "Type": "AWS::CloudWatch::Alarm",
+   "Properties": {
+    "AlarmActions": [
+     {
+      "Ref": "AlertTopic2720D535"
+     }
+    ],
+    "AlarmDescription": "ALB target group healthy host count dropped below 1",
+    "AlarmName": "zyvia-api-healthy-host-count",
+    "ComparisonOperator": "LessThanThreshold",
+    "Dimensions": [
+     {
+      "Name": "TargetGroup",
+      "Value": {
+       "Fn::ImportValue": "ZyviaCompute:ExportsOutputFnGetAttTargetGroup3D7CD9B8TargetGroupFullName17844DE2"
+      }
+     }
+    ],
+    "EvaluationPeriods": 2,
+    "MetricName": "HealthyHostCount",
+    "Namespace": "AWS/ApplicationELB",
+    "Period": 60,
+    "Statistic": "Minimum",
+    "Threshold": 1,
+    "TreatMissingData": "breaching"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaObservability/HealthyHostCountAlarm/Resource"
+   }
+  },
+  "CpuAlarm87CA37A9": {
+   "Type": "AWS::CloudWatch::Alarm",
+   "Properties": {
+    "AlarmActions": [
+     {
+      "Ref": "AlertTopic2720D535"
+     }
+    ],
+    "AlarmDescription": "ECS service CPU utilization > 85% for 5 minutes",
+    "AlarmName": "zyvia-api-cpu-high",
+    "ComparisonOperator": "GreaterThanThreshold",
+    "Dimensions": [
+     {
+      "Name": "ClusterName",
+      "Value": {
+       "Fn::ImportValue": "ZyviaCompute:ExportsOutputRefClusterEB0386A796A0E3FE"
+      }
+     },
+     {
+      "Name": "ServiceName",
+      "Value": {
+       "Fn::ImportValue": "ZyviaCompute:ExportsOutputFnGetAttFargateServiceAC2B3B85NameFCF2B9A2"
+      }
+     }
+    ],
+    "EvaluationPeriods": 1,
+    "MetricName": "CPUUtilization",
+    "Namespace": "AWS/ECS",
+    "Period": 300,
+    "Statistic": "Average",
+    "Threshold": 85,
+    "TreatMissingData": "notBreaching"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaObservability/CpuAlarm/Resource"
+   }
+  },
+  "Dashboard9E4231ED": {
+   "Type": "AWS::CloudWatch::Dashboard",
+   "Properties": {
+    "DashboardBody": {
+     "Fn::Join": [
+      "",
+      [
+       "{\"widgets\":[{\"type\":\"metric\",\"width\":6,\"height\":6,\"x\":0,\"y\":0,\"properties\":{\"view\":\"timeSeries\",\"title\":\"Request Count\",\"region\":\"",
+       {
+        "Ref": "AWS::Region"
+       },
+       "\",\"metrics\":[[\"AWS/ApplicationELB\",\"RequestCount\",\"TargetGroup\",\"",
+       {
+        "Fn::ImportValue": "ZyviaCompute:ExportsOutputFnGetAttTargetGroup3D7CD9B8TargetGroupFullName17844DE2"
+       },
+       "\",{\"period\":60,\"stat\":\"Sum\"}]],\"yAxis\":{}}},{\"type\":\"metric\",\"width\":6,\"height\":6,\"x\":6,\"y\":0,\"properties\":{\"view\":\"timeSeries\",\"title\":\"5xx Error Rate (%)\",\"region\":\"",
+       {
+        "Ref": "AWS::Region"
+       },
+       "\",\"metrics\":[[{\"label\":\"(m1 / m2) * 100\",\"expression\":\"(m1 / m2) * 100\",\"period\":60}],[\"AWS/ApplicationELB\",\"HTTPCode_Target_5XX_Count\",\"TargetGroup\",\"",
+       {
+        "Fn::ImportValue": "ZyviaCompute:ExportsOutputFnGetAttTargetGroup3D7CD9B8TargetGroupFullName17844DE2"
+       },
+       "\",{\"id\":\"m1\",\"visible\":false,\"period\":60,\"stat\":\"Sum\"}],[\"AWS/ApplicationELB\",\"RequestCount\",\"TargetGroup\",\"",
+       {
+        "Fn::ImportValue": "ZyviaCompute:ExportsOutputFnGetAttTargetGroup3D7CD9B8TargetGroupFullName17844DE2"
+       },
+       "\",{\"id\":\"m2\",\"visible\":false,\"period\":60,\"stat\":\"Sum\"}]],\"yAxis\":{}}},{\"type\":\"metric\",\"width\":6,\"height\":6,\"x\":0,\"y\":6,\"properties\":{\"view\":\"timeSeries\",\"title\":\"ECS CPU Utilization (%)\",\"region\":\"",
+       {
+        "Ref": "AWS::Region"
+       },
+       "\",\"metrics\":[[\"AWS/ECS\",\"CPUUtilization\",\"ClusterName\",\"",
+       {
+        "Fn::ImportValue": "ZyviaCompute:ExportsOutputRefClusterEB0386A796A0E3FE"
+       },
+       "\",\"ServiceName\",\"",
+       {
+        "Fn::ImportValue": "ZyviaCompute:ExportsOutputFnGetAttFargateServiceAC2B3B85NameFCF2B9A2"
+       },
+       "\",{\"period\":60}]],\"yAxis\":{}}},{\"type\":\"metric\",\"width\":6,\"height\":6,\"x\":6,\"y\":6,\"properties\":{\"view\":\"timeSeries\",\"title\":\"ECS Memory Utilization (%)\",\"region\":\"",
+       {
+        "Ref": "AWS::Region"
+       },
+       "\",\"metrics\":[[\"AWS/ECS\",\"MemoryUtilization\",\"ClusterName\",\"",
+       {
+        "Fn::ImportValue": "ZyviaCompute:ExportsOutputRefClusterEB0386A796A0E3FE"
+       },
+       "\",\"ServiceName\",\"",
+       {
+        "Fn::ImportValue": "ZyviaCompute:ExportsOutputFnGetAttFargateServiceAC2B3B85NameFCF2B9A2"
+       },
+       "\",{\"period\":60}]],\"yAxis\":{}}}]}"
+      ]
+     ]
+    },
+    "DashboardName": "zyvia-api"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaObservability/Dashboard/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/z2JsQ7CIBRFv6U7PFvi0NXobmLdzSvUlJZCwwMZCP9usInTPedcAeLcQdtgIi7Vyo0eIQ8B5cow0SuTJchPt2vJrm/7g8KkcVElDHKGfDHot/odcEOaR4de1fSXUqreY9hjKMw6NcFCp0/Xg2ihbxbSmvtog94meBz7BeC2RyKZAAAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaObservability/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "AlertTopicArn": {
+   "Description": "SNS alert topic ARN — subscribe Slack/PagerDuty webhooks here",
+   "Value": {
+    "Ref": "AlertTopic2720D535"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

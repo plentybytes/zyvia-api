@@ -1,0 +1,792 @@
+{
+ "Resources": {
+  "EcrRepository4D7B3EE1": {
+   "Type": "AWS::ECR::Repository",
+   "Properties": {
+    "ImageScanningConfiguration": {
+     "ScanOnPush": true
+    },
+    "LifecyclePolicy": {
+     "LifecyclePolicyText": "{\"rules\":[{\"rulePriority\":1,\"description\":\"Keep last 10 images\",\"selection\":{\"tagStatus\":\"any\",\"countType\":\"imageCountMoreThan\",\"countNumber\":10},\"action\":{\"type\":\"expire\"}}]}"
+    },
+    "RepositoryName": "zyvia-api"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/EcrRepository/Resource"
+   }
+  },
+  "ClusterEB0386A7": {
+   "Type": "AWS::ECS::Cluster",
+   "Properties": {
+    "ClusterName": "zyvia",
+    "ClusterSettings": [
+     {
+      "Name": "containerInsights",
+      "Value": "enabled"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/Cluster/Resource"
+   }
+  },
+  "AppLogGroup7D8CD952": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/zyvia/api",
+    "RetentionInDays": 90
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/AppLogGroup/Resource"
+   }
+  },
+  "TaskRole30FC0FBB": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "ECS task role for zyvia-api — S3 access + Secrets Manager read"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/TaskRole/Resource"
+   }
+  },
+  "TaskRoleDefaultPolicy07FC53DE": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:Abort*",
+        "s3:DeleteObject*",
+        "s3:GetBucket*",
+        "s3:GetObject*",
+        "s3:List*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "ZyviaStorage:ExportsOutputFnGetAttHealthRecordsBucket28A5ADA9Arn94DC811F"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "ZyviaStorage:ExportsOutputFnGetAttHealthRecordsBucket28A5ADA9Arn94DC811F"
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "ZyviaData:ExportsOutputRefDatabaseUrlSecretFA7DE06246075C80"
+        },
+        {
+         "Fn::ImportValue": "ZyviaData:ExportsOutputRefJwtPublicKeySecret356FEBF80554532F"
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "TaskRoleDefaultPolicy07FC53DE",
+    "Roles": [
+     {
+      "Ref": "TaskRole30FC0FBB"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/TaskRole/DefaultPolicy/Resource"
+   }
+  },
+  "ExecutionRole605A040B": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "ECS task execution role — image pull + CloudWatch logs",
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/ExecutionRole/Resource"
+   }
+  },
+  "ExecutionRoleDefaultPolicyA5B92313": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "ZyviaData:ExportsOutputRefDatabaseUrlSecretFA7DE06246075C80"
+        },
+        {
+         "Fn::ImportValue": "ZyviaData:ExportsOutputRefJwtPublicKeySecret356FEBF80554532F"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "EcrRepository4D7B3EE1",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": "ecr:GetAuthorizationToken",
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "AppLogGroup7D8CD952",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "ExecutionRoleDefaultPolicyA5B92313",
+    "Roles": [
+     {
+      "Ref": "ExecutionRole605A040B"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/ExecutionRole/DefaultPolicy/Resource"
+   }
+  },
+  "TaskDefinitionB36D86D9": {
+   "Type": "AWS::ECS::TaskDefinition",
+   "Properties": {
+    "ContainerDefinitions": [
+     {
+      "Environment": [
+       {
+        "Name": "PORT",
+        "Value": "3000"
+       },
+       {
+        "Name": "NODE_ENV",
+        "Value": "production"
+       },
+       {
+        "Name": "OBJECT_STORE_BUCKET",
+        "Value": {
+         "Fn::ImportValue": "ZyviaStorage:ExportsOutputRefHealthRecordsBucket28A5ADA90F5E4B76"
+        }
+       },
+       {
+        "Name": "OBJECT_STORE_REGION",
+        "Value": "ap-southeast-2"
+       }
+      ],
+      "Essential": true,
+      "Image": {
+       "Fn::Join": [
+        "",
+        [
+         {
+          "Fn::Select": [
+           4,
+           {
+            "Fn::Split": [
+             ":",
+             {
+              "Fn::GetAtt": [
+               "EcrRepository4D7B3EE1",
+               "Arn"
+              ]
+             }
+            ]
+           }
+          ]
+         },
+         ".dkr.ecr.",
+         {
+          "Fn::Select": [
+           3,
+           {
+            "Fn::Split": [
+             ":",
+             {
+              "Fn::GetAtt": [
+               "EcrRepository4D7B3EE1",
+               "Arn"
+              ]
+             }
+            ]
+           }
+          ]
+         },
+         ".",
+         {
+          "Ref": "AWS::URLSuffix"
+         },
+         "/",
+         {
+          "Ref": "EcrRepository4D7B3EE1"
+         },
+         ":latest"
+        ]
+       ]
+      },
+      "LogConfiguration": {
+       "LogDriver": "awslogs",
+       "Options": {
+        "awslogs-group": {
+         "Ref": "AppLogGroup7D8CD952"
+        },
+        "awslogs-stream-prefix": "zyvia-api",
+        "awslogs-region": "ap-southeast-2"
+       }
+      },
+      "Name": "AppContainer",
+      "PortMappings": [
+       {
+        "ContainerPort": 3000,
+        "Protocol": "tcp"
+       }
+      ],
+      "Secrets": [
+       {
+        "Name": "DATABASE_URL",
+        "ValueFrom": {
+         "Fn::ImportValue": "ZyviaData:ExportsOutputRefDatabaseUrlSecretFA7DE06246075C80"
+        }
+       },
+       {
+        "Name": "JWT_PUBLIC_KEY",
+        "ValueFrom": {
+         "Fn::ImportValue": "ZyviaData:ExportsOutputRefJwtPublicKeySecret356FEBF80554532F"
+        }
+       }
+      ]
+     }
+    ],
+    "Cpu": "512",
+    "ExecutionRoleArn": {
+     "Fn::GetAtt": [
+      "ExecutionRole605A040B",
+      "Arn"
+     ]
+    },
+    "Family": "ZyviaComputeTaskDefinitionEF1DC07F",
+    "Memory": "1024",
+    "NetworkMode": "awsvpc",
+    "RequiresCompatibilities": [
+     "FARGATE"
+    ],
+    "TaskRoleArn": {
+     "Fn::GetAtt": [
+      "TaskRole30FC0FBB",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/TaskDefinition/Resource"
+   }
+  },
+  "Alb16C2F182": {
+   "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+   "Properties": {
+    "LoadBalancerAttributes": [
+     {
+      "Key": "deletion_protection.enabled",
+      "Value": "false"
+     }
+    ],
+    "Scheme": "internet-facing",
+    "SecurityGroups": [
+     {
+      "Fn::ImportValue": "ZyviaNetwork:ExportsOutputFnGetAttAlbSecurityGroup86A59E99GroupIdE3A37BC7"
+     }
+    ],
+    "Subnets": [
+     {
+      "Fn::ImportValue": "ZyviaNetwork:ExportsOutputRefVpcPublicSubnet1Subnet5C2D37C4FFA2B456"
+     },
+     {
+      "Fn::ImportValue": "ZyviaNetwork:ExportsOutputRefVpcPublicSubnet2Subnet691E08A351552740"
+     }
+    ],
+    "Type": "application"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/Alb/Resource"
+   }
+  },
+  "AlbHttpsListener2ADA614F": {
+   "Type": "AWS::ElasticLoadBalancingV2::Listener",
+   "Properties": {
+    "Certificates": [
+     {
+      "CertificateArn": {
+       "Fn::Join": [
+        "",
+        [
+         "arn:aws:acm:ap-southeast-2:",
+         {
+          "Ref": "AWS::AccountId"
+         },
+         ":certificate/PLACEHOLDER"
+        ]
+       ]
+      }
+     }
+    ],
+    "DefaultActions": [
+     {
+      "TargetGroupArn": {
+       "Ref": "TargetGroup3D7CD9B8"
+      },
+      "Type": "forward"
+     }
+    ],
+    "LoadBalancerArn": {
+     "Ref": "Alb16C2F182"
+    },
+    "Port": 443,
+    "Protocol": "HTTPS"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/Alb/HttpsListener/Resource"
+   }
+  },
+  "AlbHttpRedirectListener2B61A85C": {
+   "Type": "AWS::ElasticLoadBalancingV2::Listener",
+   "Properties": {
+    "DefaultActions": [
+     {
+      "RedirectConfig": {
+       "Port": "443",
+       "Protocol": "HTTPS",
+       "StatusCode": "HTTP_301"
+      },
+      "Type": "redirect"
+     }
+    ],
+    "LoadBalancerArn": {
+     "Ref": "Alb16C2F182"
+    },
+    "Port": 80,
+    "Protocol": "HTTP"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/Alb/HttpRedirectListener/Resource"
+   }
+  },
+  "TargetGroup3D7CD9B8": {
+   "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+   "Properties": {
+    "HealthCheckIntervalSeconds": 30,
+    "HealthCheckPath": "/v1/health",
+    "HealthyThresholdCount": 2,
+    "Port": 3000,
+    "Protocol": "HTTP",
+    "TargetGroupAttributes": [
+     {
+      "Key": "stickiness.enabled",
+      "Value": "false"
+     }
+    ],
+    "TargetType": "ip",
+    "UnhealthyThresholdCount": 3,
+    "VpcId": {
+     "Fn::ImportValue": "ZyviaNetwork:ExportsOutputRefVpc8378EB38272D6E3A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/TargetGroup/Resource"
+   }
+  },
+  "FargateServiceAC2B3B85": {
+   "Type": "AWS::ECS::Service",
+   "Properties": {
+    "Cluster": {
+     "Ref": "ClusterEB0386A7"
+    },
+    "DeploymentConfiguration": {
+     "Alarms": {
+      "AlarmNames": [],
+      "Enable": false,
+      "Rollback": false
+     },
+     "DeploymentCircuitBreaker": {
+      "Enable": true,
+      "Rollback": true
+     },
+     "MaximumPercent": 200,
+     "MinimumHealthyPercent": 50
+    },
+    "DeploymentController": {
+     "Type": "ECS"
+    },
+    "DesiredCount": 2,
+    "EnableECSManagedTags": false,
+    "HealthCheckGracePeriodSeconds": 60,
+    "LaunchType": "FARGATE",
+    "LoadBalancers": [
+     {
+      "ContainerName": "AppContainer",
+      "ContainerPort": 3000,
+      "TargetGroupArn": {
+       "Ref": "TargetGroup3D7CD9B8"
+      }
+     }
+    ],
+    "NetworkConfiguration": {
+     "AwsvpcConfiguration": {
+      "AssignPublicIp": "DISABLED",
+      "SecurityGroups": [
+       {
+        "Fn::ImportValue": "ZyviaNetwork:ExportsOutputFnGetAttEcsSecurityGroup44008BF1GroupIdDE2CA5C5"
+       }
+      ],
+      "Subnets": [
+       {
+        "Fn::ImportValue": "ZyviaNetwork:ExportsOutputRefVpcPrivateSubnet1Subnet536B997AFD4CC940"
+       },
+       {
+        "Fn::ImportValue": "ZyviaNetwork:ExportsOutputRefVpcPrivateSubnet2Subnet3788AAA1380949A3"
+       }
+      ]
+     }
+    },
+    "TaskDefinition": {
+     "Ref": "TaskDefinitionB36D86D9"
+    }
+   },
+   "DependsOn": [
+    "AlbHttpsListener2ADA614F",
+    "TaskRoleDefaultPolicy07FC53DE",
+    "TaskRole30FC0FBB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/FargateService/Service"
+   }
+  },
+  "FargateServiceTaskCountTarget8CF96FEA": {
+   "Type": "AWS::ApplicationAutoScaling::ScalableTarget",
+   "Properties": {
+    "MaxCapacity": 10,
+    "MinCapacity": 2,
+    "ResourceId": {
+     "Fn::Join": [
+      "",
+      [
+       "service/",
+       {
+        "Ref": "ClusterEB0386A7"
+       },
+       "/",
+       {
+        "Fn::GetAtt": [
+         "FargateServiceAC2B3B85",
+         "Name"
+        ]
+       }
+      ]
+     ]
+    },
+    "RoleARN": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":iam::",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
+      ]
+     ]
+    },
+    "ScalableDimension": "ecs:service:DesiredCount",
+    "ServiceNamespace": "ecs"
+   },
+   "DependsOn": [
+    "TaskRoleDefaultPolicy07FC53DE",
+    "TaskRole30FC0FBB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/FargateService/TaskCount/Target/Resource"
+   }
+  },
+  "FargateServiceTaskCountTargetCpuScaling086750CA": {
+   "Type": "AWS::ApplicationAutoScaling::ScalingPolicy",
+   "Properties": {
+    "PolicyName": "ZyviaComputeFargateServiceTaskCountTargetCpuScaling35F1E9F7",
+    "PolicyType": "TargetTrackingScaling",
+    "ScalingTargetId": {
+     "Ref": "FargateServiceTaskCountTarget8CF96FEA"
+    },
+    "TargetTrackingScalingPolicyConfiguration": {
+     "PredefinedMetricSpecification": {
+      "PredefinedMetricType": "ECSServiceAverageCPUUtilization"
+     },
+     "TargetValue": 70
+    }
+   },
+   "DependsOn": [
+    "TaskRoleDefaultPolicy07FC53DE",
+    "TaskRole30FC0FBB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/FargateService/TaskCount/Target/CpuScaling/Resource"
+   }
+  },
+  "FargateServiceTaskCountTargetMemoryScaling536CA002": {
+   "Type": "AWS::ApplicationAutoScaling::ScalingPolicy",
+   "Properties": {
+    "PolicyName": "ZyviaComputeFargateServiceTaskCountTargetMemoryScaling6E255C41",
+    "PolicyType": "TargetTrackingScaling",
+    "ScalingTargetId": {
+     "Ref": "FargateServiceTaskCountTarget8CF96FEA"
+    },
+    "TargetTrackingScalingPolicyConfiguration": {
+     "PredefinedMetricSpecification": {
+      "PredefinedMetricType": "ECSServiceAverageMemoryUtilization"
+     },
+     "TargetValue": 70
+    }
+   },
+   "DependsOn": [
+    "TaskRoleDefaultPolicy07FC53DE",
+    "TaskRole30FC0FBB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/FargateService/TaskCount/Target/MemoryScaling/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/11QTW/CMAz9LdxDBtUOXDem7YK0qeU+mdREpiGu8lE0RfnvU1u6lp3e8/Oz5edCFs9buVnBza9V3awNnWSqAqhGwM1/J1ROphJb9hTY/Yj92c5VFqi8THsTfUDX9yb6Dk5DwCP45g3PZCkQ297wX2EbgCy6hXafrdB1pLAfmmilwMDJDGv3HG3IwrD2Mh1YfziObW+eeBYEV5lKNsOOAb/YkBpCjCwLNOADKcNQn8CAVWR1V8j00raGFPQHHRjq16E3Znyolz7yAe3dM/FF/whOY/i7c1FmAbMNYmCvwJDVMs2Je/Pwi0dlhKMD1ZDV1Tg3x3wQchYleo5u/OpnDG0MWViuUV78U7fdyWIjd6uLJ1q7aANdUZYj/gLux8sKKAIAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaCompute/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "AlbDnsName": {
+   "Description": "ALB DNS name — use for smoke tests and GitHub Actions ALB_DNS_NAME variable",
+   "Value": {
+    "Fn::GetAtt": [
+     "Alb16C2F182",
+     "DNSName"
+    ]
+   }
+  },
+  "EcrRepositoryUri": {
+   "Description": "ECR repository URI — set as ECR_REPOSITORY in GitHub Actions",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      {
+       "Fn::Select": [
+        4,
+        {
+         "Fn::Split": [
+          ":",
+          {
+           "Fn::GetAtt": [
+            "EcrRepository4D7B3EE1",
+            "Arn"
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      ".dkr.ecr.",
+      {
+       "Fn::Select": [
+        3,
+        {
+         "Fn::Split": [
+          ":",
+          {
+           "Fn::GetAtt": [
+            "EcrRepository4D7B3EE1",
+            "Arn"
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      ".",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "EcrRepository4D7B3EE1"
+      }
+     ]
+    ]
+   }
+  },
+  "EcsClusterName": {
+   "Description": "ECS cluster name — set as ECS_CLUSTER in GitHub Actions",
+   "Value": {
+    "Ref": "ClusterEB0386A7"
+   }
+  },
+  "EcsFargateServiceName": {
+   "Description": "ECS service name — set as ECS_SERVICE in GitHub Actions",
+   "Value": {
+    "Fn::GetAtt": [
+     "FargateServiceAC2B3B85",
+     "Name"
+    ]
+   }
+  },
+  "ExportsOutputFnGetAttTargetGroup3D7CD9B8TargetGroupFullName17844DE2": {
+   "Value": {
+    "Fn::GetAtt": [
+     "TargetGroup3D7CD9B8",
+     "TargetGroupFullName"
+    ]
+   },
+   "Export": {
+    "Name": "ZyviaCompute:ExportsOutputFnGetAttTargetGroup3D7CD9B8TargetGroupFullName17844DE2"
+   }
+  },
+  "ExportsOutputRefClusterEB0386A796A0E3FE": {
+   "Value": {
+    "Ref": "ClusterEB0386A7"
+   },
+   "Export": {
+    "Name": "ZyviaCompute:ExportsOutputRefClusterEB0386A796A0E3FE"
+   }
+  },
+  "ExportsOutputFnGetAttFargateServiceAC2B3B85NameFCF2B9A2": {
+   "Value": {
+    "Fn::GetAtt": [
+     "FargateServiceAC2B3B85",
+     "Name"
+    ]
+   },
+   "Export": {
+    "Name": "ZyviaCompute:ExportsOutputFnGetAttFargateServiceAC2B3B85NameFCF2B9A2"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}
