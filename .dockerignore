@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.git/
+.env*
+keys/
+coverage/
+*.log
+.DS_Store
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+README.md
+specs/
+.specify/
+.claude/

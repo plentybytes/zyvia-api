@@ -1,0 +1,517 @@
+openapi: "3.1.0"
+
+info:
+  title: Zyvia Health Records API
+  version: "1.0.0"
+  description: |
+    REST API for health records digitalization. Supports upload and retrieval
+    of patient health records (PDF, JPEG, PNG, DICOM) and management of the
+    record type catalogue.
+
+    ## Authentication
+    All endpoints require a JWT Bearer token issued by the configured
+    identity provider. The token MUST include a `role` claim
+    (`patient` | `provider` | `administrator`) and a `sub` claim
+    (the caller's identity — for patients, this equals their `patient_id`).
+
+    ## Authorization
+    - **patient**: may upload and retrieve records where `patient_id == token.sub`
+    - **provider**: may upload and retrieve records for any patient in their care scope
+    - **administrator**: may read and manage record types; no access to patient records
+
+    ## Error Responses
+    All errors use RFC 7807 Problem Details format.
+
+servers:
+  - url: /v1
+    description: Versioned API root
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail, instance]
+      properties:
+        type:
+          type: string
+          format: uri
+          example: "https://zyvia.api/errors/validation-error"
+        title:
+          type: string
+          example: "Validation Error"
+        status:
+          type: integer
+          example: 422
+        detail:
+          type: string
+          example: "mime_type must be one of: application/pdf, image/jpeg, image/png, application/dicom"
+        instance:
+          type: string
+          example: "/v1/upload"
+
+    RecordType:
+      type: object
+      required: [id, name, is_active, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        name:
+          type: string
+          example: "Lab Result"
+        description:
+          type: string
+          nullable: true
+          example: "Laboratory test results and pathology reports"
+        is_active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+
+    HealthRecordSummary:
+      type: object
+      required: [id, patient_id, record_type, file_name, file_size_bytes, mime_type, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        patient_id:
+          type: string
+          example: "patient-abc-123"
+        record_type:
+          $ref: "#/components/schemas/RecordType"
+        file_name:
+          type: string
+          example: "blood-test-2026-04-01.pdf"
+        file_size_bytes:
+          type: integer
+          format: int64
+          example: 204800
+        mime_type:
+          type: string
+          enum: [application/pdf, image/jpeg, image/png, application/dicom]
+        created_at:
+          type: string
+          format: date-time
+
+    HealthRecordDetail:
+      allOf:
+        - $ref: "#/components/schemas/HealthRecordSummary"
+        - type: object
+          required: [download_url, download_url_expires_at]
+          properties:
+            download_url:
+              type: string
+              format: uri
+              description: Time-limited pre-signed URL valid for 24 hours
+            download_url_expires_at:
+              type: string
+              format: date-time
+
+    UploadResponse:
+      type: object
+      required: [id, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the newly created record
+        created_at:
+          type: string
+          format: date-time
+
+    RecordListResponse:
+      type: object
+      required: [data, has_more]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthRecordSummary"
+        next_cursor:
+          type: string
+          nullable: true
+          description: Opaque cursor for the next page; null when no more pages
+        has_more:
+          type: boolean
+
+    RecordTypeListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecordType"
+
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        version:
+          type: string
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      security: []
+      tags: [System]
+      responses:
+        "200":
+          description: Service is running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /ready:
+    get:
+      summary: Readiness check (database + storage reachable)
+      operationId: getReady
+      security: []
+      tags: [System]
+      responses:
+        "200":
+          description: Service is ready to accept traffic
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+        "503":
+          description: Service not ready (dependency unavailable)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+
+  /upload:
+    post:
+      summary: Upload a health record file
+      operationId: uploadRecord
+      tags: [Records]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: |
+            Client-supplied key (UUID recommended) to prevent duplicate uploads
+            on retries. If a completed upload with this key exists, returns the
+            original record (HTTP 200). Keys expire after 24 hours.
+          schema:
+            type: string
+            maxLength: 255
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [patient_id, record_type_id, file]
+              properties:
+                patient_id:
+                  type: string
+                  maxLength: 255
+                  description: |
+                    ID of the patient this record belongs to.
+                    For `patient` role callers, MUST match their JWT `sub`.
+                record_type_id:
+                  type: string
+                  format: uuid
+                  description: ID of an active record type from GET /v1/record-types
+                file:
+                  type: string
+                  format: binary
+                  description: |
+                    The record file. Accepted types: application/pdf, image/jpeg,
+                    image/png, application/dicom. Maximum size: 50 MB.
+      responses:
+        "201":
+          description: Record uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResponse"
+        "200":
+          description: Duplicate upload — original record returned (idempotency match)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResponse"
+        "401":
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "403":
+          description: Caller not authorized for this patient_id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "409":
+          description: record_type_id references an inactive type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "413":
+          description: File exceeds 50 MB limit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "422":
+          description: Unsupported file type or missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "503":
+          description: Object store unavailable; no record was persisted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+
+  /records:
+    get:
+      summary: List health records for a patient
+      operationId: listRecords
+      tags: [Records]
+      parameters:
+        - name: patient_id
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 255
+        - name: record_type_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter by record type
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Opaque pagination cursor from a previous response
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Paginated list of record summaries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordListResponse"
+        "401":
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "403":
+          description: Caller not authorized to view this patient's records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+
+  /records/{id}:
+    get:
+      summary: Get a single health record with download link
+      operationId: getRecord
+      tags: [Records]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Record metadata and time-limited download URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthRecordDetail"
+        "401":
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "403":
+          description: Caller not authorized for this record's patient
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "404":
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+
+  /record-types:
+    get:
+      summary: List all active record types
+      operationId: listRecordTypes
+      tags: [Record Types]
+      parameters:
+        - name: include_inactive
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: |
+            When true, includes inactive (soft-deprecated) types.
+            Only administrators may set this to true.
+      responses:
+        "200":
+          description: Full catalogue of record types
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordTypeListResponse"
+        "401":
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+
+    post:
+      summary: Add a new record type (administrator only)
+      operationId: createRecordType
+      tags: [Record Types]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  maxLength: 1000
+      responses:
+        "201":
+          description: Record type created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordType"
+        "401":
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "403":
+          description: Caller is not an administrator
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "409":
+          description: A record type with this name already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+
+  /record-types/{id}:
+    patch:
+      summary: Update a record type (administrator only)
+      operationId: updateRecordType
+      tags: [Record Types]
+      description: |
+        Supports soft-deprecation (`is_active: false`) and re-activation
+        (`is_active: true`). Hard deletion is not supported while any
+        health_records reference the type.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  maxLength: 1000
+                is_active:
+                  type: boolean
+      responses:
+        "200":
+          description: Updated record type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordType"
+        "401":
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "403":
+          description: Caller is not an administrator
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "404":
+          description: Record type not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "409":
+          description: Cannot hard-delete a type referenced by existing records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
