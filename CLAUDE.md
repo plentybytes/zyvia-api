@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2026-04-03
 
 ## Active Technologies
+- TypeScript 5.4 (CDK infrastructure code); Node.js 20 LTS + aws-cdk-lib ^2.140, constructs ^10, (002-aws-ecs-deployment)
+- RDS PostgreSQL 16 (db.t4g.medium, single-AZ v1); (002-aws-ecs-deployment)
 
 - Node.js 20 LTS, TypeScript 5.4 + Fastify 4 (HTTP), @fastify/multipart (file upload), (001-health-records-api)
 
@@ -68,6 +70,7 @@ Node.js 20 LTS, TypeScript 5.4 + Fastify 4: strict TypeScript, no `any`,
 RFC 7807 errors throughout, JWT RS256 auth, S3-compatible storage
 
 ## Recent Changes
+- 002-aws-ecs-deployment: Added TypeScript 5.4 (CDK infrastructure code); Node.js 20 LTS + aws-cdk-lib ^2.140, constructs ^10,
 
 - 001-health-records-api: Added Node.js 20 LTS, TypeScript 5.4 + Fastify 4 (HTTP), @fastify/multipart (file upload),
 

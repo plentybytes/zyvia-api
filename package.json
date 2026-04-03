@@ -14,9 +14,9 @@
     "test:contract": "vitest run tests/contract",
     "test:integration": "vitest run tests/integration",
     "test:unit": "vitest run tests/unit",
-    "db:migrate": "knex --knexfile src/db/knexfile.ts migrate:latest",
-    "db:migrate:rollback": "knex --knexfile src/db/knexfile.ts migrate:rollback",
-    "db:seed": "knex --knexfile src/db/knexfile.ts seed:run",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:migrate:rollback": "tsx scripts/db-migrate.ts rollback",
+    "db:seed": "tsx scripts/db-seed.ts",
     "dev:token": "tsx scripts/dev-token.ts",
     "lint": "eslint src tests scripts --ext .ts",
     "lint:fix": "eslint src tests scripts --ext .ts --fix"
@@ -24,7 +24,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.600.0",
     "@aws-sdk/s3-request-presigner": "^3.600.0",
-    "@fastify/jwt": "^9.0.0",
+    "@fastify/jwt": "^8.0.0",
     "@fastify/multipart": "^8.3.0",
     "@fastify/swagger": "^8.15.0",
     "@fastify/swagger-ui": "^4.0.0",

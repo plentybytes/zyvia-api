@@ -3,6 +3,7 @@ import fastifyMultipart from '@fastify/multipart';
 import fastifyJwt from '@fastify/jwt';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
+import { randomUUID } from 'crypto';
 import { config } from './config/index.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { healthRoutes } from './routes/health.js';
@@ -28,7 +29,7 @@ export async function buildApp() {
         },
       },
     },
-    genReqId: () => crypto.randomUUID(),
+    genReqId: () => randomUUID(),
   });
 
   // Add request_id + duration_ms to all responses

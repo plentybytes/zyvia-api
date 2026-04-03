@@ -1,0 +1,21 @@
+{
+  "version": "52.0.0",
+  "files": {
+    "44df4d6318256fc09a4ee5ffa780be5e30f19126fb9cd066f0de5900ec1463d0": {
+      "displayName": "ZyviaObservability Template",
+      "source": {
+        "path": "ZyviaObservability.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "current_account-ap-southeast-2-cea22d21": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2",
+          "objectKey": "44df4d6318256fc09a4ee5ffa780be5e30f19126fb9cd066f0de5900ec1463d0.json",
+          "region": "ap-southeast-2",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-ap-southeast-2"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}
