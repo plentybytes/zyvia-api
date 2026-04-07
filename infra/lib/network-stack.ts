@@ -33,19 +33,18 @@ export class NetworkStack extends cdk.Stack {
     this.publicSubnets = this.vpc.publicSubnets;
     this.privateSubnets = this.vpc.privateSubnets;
 
-    // ALB security group — allows inbound 443 and 80 from anywhere
+    // ALB security group - allows inbound HTTP from anywhere (HTTP-only deployment)
     this.albSecurityGroup = new ec2.SecurityGroup(this, 'AlbSecurityGroup', {
       vpc: this.vpc,
-      description: 'ALB Security Group — allows HTTPS and HTTP from anywhere',
+      description: 'ALB Security Group - allows HTTP from anywhere',
       allowAllOutbound: true,
     });
-    this.albSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'HTTPS from anywhere');
-    this.albSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'HTTP redirect from anywhere');
+    this.albSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'HTTP from anywhere');
 
-    // ECS security group — allows port 3000 from ALB only
+    // ECS security group - allows port 3000 from ALB only
     this.ecsSecurityGroup = new ec2.SecurityGroup(this, 'EcsSecurityGroup', {
       vpc: this.vpc,
-      description: 'ECS Security Group — allows port 3000 from ALB only',
+      description: 'ECS Security Group - allows port 3000 from ALB only',
       allowAllOutbound: true,
     });
     this.ecsSecurityGroup.addIngressRule(
