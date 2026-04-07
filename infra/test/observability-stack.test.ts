@@ -16,7 +16,7 @@ function buildTemplate() {
   const cluster = new ecs.Cluster(vpcStack, 'Cluster', { vpc });
 
   const albStack = new cdk.Stack(app, 'AlbStack', { env });
-  const alb = new elbv2.ApplicationLoadBalancer(albStack, 'Alb', { vpc, internetFacing: true });
+  new elbv2.ApplicationLoadBalancer(albStack, 'Alb', { vpc, internetFacing: true });
   const targetGroup = new elbv2.ApplicationTargetGroup(albStack, 'TG', {
     vpc,
     port: 3000,

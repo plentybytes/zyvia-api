@@ -15,7 +15,7 @@
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": true,
     "@aws-cdk/aws-s3:keepNotificationInImportedBucket": false,
     "@aws-cdk/core:stackRelativeExports": true,
-    "region": "ap-southeast-2",
+    "region": "ap-south-1",
     "imageTag": "latest",
     "alertEmail": ""
   }
