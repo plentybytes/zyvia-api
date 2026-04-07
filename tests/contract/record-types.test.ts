@@ -8,37 +8,23 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { buildApp } from '../../src/app.js';
 import type { FastifyInstance } from 'fastify';
 
-const SEEDED_TYPES = [
-  { id: 'rt-001', name: 'Lab Result', description: null, is_active: true, created_at: new Date(), updated_at: new Date() },
-  { id: 'rt-002', name: 'Prescription', description: null, is_active: true, created_at: new Date(), updated_at: new Date() },
-];
-
+// vi.mock is hoisted — avoid referencing module-level variables in the factory
 vi.mock('../../src/services/record-type.service.js', () => ({
-  listRecordTypes: vi.fn().mockResolvedValue(SEEDED_TYPES),
-  createRecordType: vi.fn().mockResolvedValue({
-    id: 'rt-new',
-    name: 'Mental Health Note',
-    description: 'Psychiatric and psychological records',
-    is_active: true,
-    created_at: new Date(),
-    updated_at: new Date(),
-  }),
-  updateRecordType: vi.fn().mockResolvedValue({
-    id: 'rt-001',
-    name: 'Lab Result',
-    description: null,
-    is_active: false,
-    created_at: new Date(),
-    updated_at: new Date(),
-  }),
+  listRecordTypes: vi.fn(),
+  createRecordType: vi.fn(),
+  updateRecordType: vi.fn(),
   getRecordTypeById: vi.fn(),
 }));
 
 vi.mock('../../src/middleware/auth.js', () => ({
-  requireAuth: vi.fn().mockImplementation(async (request: { headers: Record<string, string>; user: unknown }) => {
+  requireAuth: vi.fn().mockImplementation(async (request: { headers: Record<string, string>; user: unknown }, reply: { status: (n: number) => { send: (b: unknown) => void }; sent: boolean }) => {
     const header = request.headers.authorization ?? '';
     const match = header.match(/test-token-(\w+)-(.+)/);
-    if (match) request.user = { role: match[1], sub: match[2] };
+    if (match) {
+      request.user = { role: match[1], sub: match[2] };
+    } else {
+      reply.status(401).send({ type: 'about:blank', title: 'Unauthorized', status: 401, detail: 'Missing token', instance: '/v1/record-types' });
+    }
   }),
   requireAdmin: vi.fn().mockImplementation(async (request: { headers: Record<string, string>; user: unknown }, reply: { status: (n: number) => { send: (b: unknown) => void }; sent: boolean }) => {
     const header = request.headers.authorization ?? '';
@@ -67,10 +53,35 @@ vi.mock('../../src/middleware/auth.js', () => ({
   assertPatientAccess: vi.fn().mockReturnValue(true),
 }));
 
+const SEEDED_TYPES = [
+  { id: 'rt-001', name: 'Lab Result', description: null, is_active: true, created_at: new Date(), updated_at: new Date() },
+  { id: 'rt-002', name: 'Prescription', description: null, is_active: true, created_at: new Date(), updated_at: new Date() },
+];
+
 let app: FastifyInstance;
 
 beforeAll(async () => {
   process.env.NODE_ENV = 'test';
+
+  // Set mock return values here (after vi.mock hoisting resolves)
+  const svc = await import('../../src/services/record-type.service.js');
+  vi.mocked(svc.listRecordTypes).mockResolvedValue(SEEDED_TYPES);
+  vi.mocked(svc.createRecordType).mockResolvedValue({
+    id: 'rt-new',
+    name: 'Mental Health Note',
+    description: 'Psychiatric and psychological records',
+    is_active: true,
+    created_at: new Date(),
+    updated_at: new Date(),
+  });
+  vi.mocked(svc.updateRecordType).mockResolvedValue({
+    id: 'rt-001',
+    name: 'Lab Result',
+    description: null,
+    is_active: false,
+    created_at: new Date(),
+    updated_at: new Date(),
+  });
   process.env.DATABASE_URL = 'postgresql://zyvia:zyvia@localhost:5432/zyvia_test';
   process.env.OBJECT_STORE_ENDPOINT = 'http://localhost:9000';
   process.env.OBJECT_STORE_BUCKET = 'health-records';
@@ -196,11 +207,75 @@ describe('POST /v1/record-types', () => {
   });
 });
 
+describe('patient role restrictions', () => {
+  it('GET /v1/record-types returns 200 for patient (read allowed)', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/record-types',
+      headers: { authorization: 'test-token-patient-patient-001' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body) as { data: unknown[] };
+    expect(body).toHaveProperty('data');
+  });
+
+  it('POST /v1/record-types returns 403 for patient (management forbidden)', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/record-types',
+      headers: {
+        authorization: 'test-token-patient-patient-001',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ name: 'Patient Created Type' }),
+    });
+
+    expect(res.statusCode).toBe(403);
+    const body = JSON.parse(res.body) as { status: number; title: string };
+    expect(body.status).toBe(403);
+  });
+
+  it('POST /v1/record-types 403 response is RFC 7807 Problem Details', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/record-types',
+      headers: {
+        authorization: 'test-token-patient-patient-001',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ name: 'Patient Created Type' }),
+    });
+
+    const body = JSON.parse(res.body) as Record<string, unknown>;
+    expect(body).toHaveProperty('type');
+    expect(body).toHaveProperty('title');
+    expect(body).toHaveProperty('status', 403);
+    expect(body).toHaveProperty('detail');
+  });
+
+  it('PATCH /v1/record-types/:id returns 403 for patient (management forbidden)', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/v1/record-types/00000000-0000-0000-0000-000000000001',
+      headers: {
+        authorization: 'test-token-patient-patient-001',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ is_active: false }),
+    });
+
+    expect(res.statusCode).toBe(403);
+    const body = JSON.parse(res.body) as { status: number };
+    expect(body.status).toBe(403);
+  });
+});
+
 describe('PATCH /v1/record-types/:id', () => {
   it('returns 200 when admin soft-deprecates a record type', async () => {
     const res = await app.inject({
       method: 'PATCH',
-      url: '/v1/record-types/rt-001',
+      url: '/v1/record-types/00000000-0000-0000-0000-000000000001',
       headers: {
         authorization: 'test-token-administrator-admin-001',
         'content-type': 'application/json',
@@ -216,7 +291,7 @@ describe('PATCH /v1/record-types/:id', () => {
   it('returns 403 when non-admin tries to update', async () => {
     const res = await app.inject({
       method: 'PATCH',
-      url: '/v1/record-types/rt-001',
+      url: '/v1/record-types/00000000-0000-0000-0000-000000000001',
       headers: {
         authorization: 'test-token-provider-provider-001',
         'content-type': 'application/json',

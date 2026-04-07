@@ -109,6 +109,7 @@ export class ComputeStack extends cdk.Stack {
         NODE_ENV: 'production',
         OBJECT_STORE_BUCKET: healthRecordsBucket.bucketName,
         OBJECT_STORE_REGION: this.region,
+        OBJECT_STORE_ENDPOINT: `https://s3.${this.region}.amazonaws.com`,
       },
       secrets: {
         DATABASE_URL: ecs.Secret.fromSecretsManager(databaseUrlSecret),
@@ -138,30 +139,11 @@ export class ComputeStack extends cdk.Stack {
       },
     });
 
-    // HTTPS listener (self-signed cert placeholder — replace with ACM cert)
-    // Using HTTP for now; production should use a real ACM certificate ARN via context
-    const httpsListener = this.alb.addListener('HttpsListener', {
-      port: 443,
-      protocol: elbv2.ApplicationProtocol.HTTPS,
-      certificates: [
-        elbv2.ListenerCertificate.fromArn(
-          this.node.tryGetContext('acmCertificateArn') as string ??
-          `arn:aws:acm:${this.region}:${this.account}:certificate/PLACEHOLDER`,
-        ),
-      ],
-      defaultTargetGroups: [this.targetGroup],
-    });
-    void httpsListener;
-
-    // HTTP → HTTPS redirect
-    this.alb.addListener('HttpRedirectListener', {
+    // HTTP listener — HTTP-only deployment (no TLS termination at ALB)
+    this.alb.addListener('HttpListener', {
       port: 80,
       protocol: elbv2.ApplicationProtocol.HTTP,
-      defaultAction: elbv2.ListenerAction.redirect({
-        protocol: 'HTTPS',
-        port: '443',
-        permanent: true,
-      }),
+      defaultTargetGroups: [this.targetGroup],
     });
 
     // Fargate service

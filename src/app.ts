@@ -43,6 +43,11 @@ export async function buildApp() {
     });
   });
 
+  // Warn loudly when authentication is disabled in development mode
+  if (config.nodeEnv === 'development') {
+    fastify.log.warn('⚠ AUTHENTICATION DISABLED — running in development mode (NODE_ENV=development)');
+  }
+
   // Register JWT plugin
   fastify.register(fastifyJwt, {
     secret: {
@@ -71,7 +76,7 @@ export async function buildApp() {
         },
       },
     });
-    await fastify.register(fastifySwaggerUi, { routePrefix: '/v1/docs' });
+    await fastify.register(fastifySwaggerUi, { routePrefix: '/documentation' });
   }
 
   // Register error handler

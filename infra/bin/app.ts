@@ -7,6 +7,7 @@ import { DataStack } from '../lib/data-stack';
 import { StorageStack } from '../lib/storage-stack';
 import { ComputeStack } from '../lib/compute-stack';
 import { ObservabilityStack } from '../lib/observability-stack';
+import { GitHubOidcRole } from '../lib/oidc-role';
 
 const app = new cdk.App();
 
@@ -16,6 +17,13 @@ const imageTag = (app.node.tryGetContext('imageTag') as string | undefined) ?? '
 const alertEmail = (app.node.tryGetContext('alertEmail') as string | undefined) ?? '';
 
 const env: cdk.Environment = { account, region };
+
+// GitHub Actions OIDC role — deployed once, used by all CI/CD jobs
+const foundation = new cdk.Stack(app, 'ZyviaFoundation', { env });
+new GitHubOidcRole(foundation, 'GitHubOidcRole', {
+  githubOrg: 'plentybytes',
+  githubRepo: 'zyvia-api',
+});
 
 const network = new NetworkStack(app, 'ZyviaNetwork', { env });
 
@@ -70,7 +78,7 @@ NagSuppressions.addStackSuppressions(
   [
     {
       id: 'AwsSolutions-EC23',
-      reason: 'ALB SG intentionally allows 0.0.0.0/0 on 443 — public-facing load balancer',
+      reason: 'ALB SG intentionally allows 0.0.0.0/0 on 80 — public-facing HTTP-only load balancer',
     },
   ],
 );

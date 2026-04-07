@@ -187,7 +187,7 @@ jobs:
         env:
           ALB_DNS: ${{ vars.ALB_DNS_NAME }}
         run: |
-          RESPONSE=$(curl -sf "https://$ALB_DNS/v1/health" || echo "FAILED")
+          RESPONSE=$(curl -sf "http://$ALB_DNS/v1/health" || echo "FAILED")
           echo "Health check response: $RESPONSE"
           if echo "$RESPONSE" | grep -q '"status":"ok"'; then
             echo "Smoke test passed"
