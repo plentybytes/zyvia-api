@@ -9,12 +9,19 @@ const configSchema = z.object({
   DATABASE_URL: z.string().url(),
   OBJECT_STORE_ENDPOINT: z.string().url(),
   OBJECT_STORE_BUCKET: z.string().min(1),
-  OBJECT_STORE_ACCESS_KEY: z.string().min(1),
-  OBJECT_STORE_SECRET_KEY: z.string().min(1),
+  // Optional in production — ECS task role is used instead of static credentials
+  OBJECT_STORE_ACCESS_KEY: z.string().default(''),
+  OBJECT_STORE_SECRET_KEY: z.string().default(''),
   OBJECT_STORE_REGION: z.string().default('us-east-1'),
-  JWT_PUBLIC_KEY_PATH: z.string().min(1),
+  // Either supply JWT_PUBLIC_KEY (raw PEM, e.g. from Secrets Manager in ECS)
+  // or JWT_PUBLIC_KEY_PATH (file path, used for local development)
+  JWT_PUBLIC_KEY: z.string().optional(),
+  JWT_PUBLIC_KEY_PATH: z.string().optional(),
   JWT_PRIVATE_KEY_PATH: z.string().optional(),
-});
+}).refine(
+  (d) => d.JWT_PUBLIC_KEY || d.JWT_PUBLIC_KEY_PATH,
+  { message: 'Either JWT_PUBLIC_KEY (raw PEM) or JWT_PUBLIC_KEY_PATH (file path) must be set' },
+);
 
 const parsed = configSchema.safeParse(process.env);
 
@@ -49,8 +56,11 @@ export const config = {
   jwt: {
     publicKeyPath: env.JWT_PUBLIC_KEY_PATH,
     privateKeyPath: env.JWT_PRIVATE_KEY_PATH,
-    get publicKey() {
-      return loadKey(env.JWT_PUBLIC_KEY_PATH);
+    get publicKey(): string {
+      // Raw PEM injected via Secrets Manager (ECS production)
+      if (env.JWT_PUBLIC_KEY) return env.JWT_PUBLIC_KEY;
+      // File path (local development)
+      return loadKey(env.JWT_PUBLIC_KEY_PATH!);
     },
   },
 } as const;

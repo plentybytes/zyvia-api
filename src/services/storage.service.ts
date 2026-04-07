@@ -12,14 +12,19 @@ let s3Client: S3Client | null = null;
 
 function getS3Client(): S3Client {
   if (!s3Client) {
+    const hasExplicitCreds = config.objectStore.accessKey && config.objectStore.secretKey;
     s3Client = new S3Client({
       endpoint: config.objectStore.endpoint,
       region: config.objectStore.region,
-      credentials: {
-        accessKeyId: config.objectStore.accessKey,
-        secretAccessKey: config.objectStore.secretKey,
-      },
-      forcePathStyle: true, // Required for MinIO and S3-compatible stores
+      // Only pass explicit credentials for local dev / MinIO.
+      // In ECS production the task role provides credentials automatically.
+      ...(hasExplicitCreds && {
+        credentials: {
+          accessKeyId: config.objectStore.accessKey,
+          secretAccessKey: config.objectStore.secretKey,
+        },
+      }),
+      forcePathStyle: true, // Required for MinIO; harmless for AWS S3
     });
   }
   return s3Client;

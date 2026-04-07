@@ -8,16 +8,27 @@ export interface AuthUser {
   role: UserRole;
 }
 
-declare module 'fastify' {
-  interface FastifyRequest {
+declare module '@fastify/jwt' {
+  interface FastifyJWT {
+    payload: AuthUser;
     user: AuthUser;
   }
 }
 
+/** Synthetic identity injected when auth is bypassed in development mode. */
+export const DEV_IDENTITY: AuthUser = { sub: 'dev-patient-001', role: 'patient' };
+
 export async function requireAuth(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  // Dev bypass: skip JWT verification when running locally with no token supplied.
+  // NEVER active outside development — fail-secure default.
+  if (process.env.NODE_ENV === 'development' && !request.headers.authorization) {
+    request.user = DEV_IDENTITY;
+    return;
+  }
+
   try {
     await request.jwtVerify();
-    const payload = request.user as Record<string, unknown>;
+    const payload = request.user as unknown as Record<string, unknown>;
 
     if (!payload.sub || !payload.role) {
       reply.status(401).send(buildProblem(401, 'Token missing required claims (sub, role)', request.url));
