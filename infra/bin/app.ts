@@ -23,7 +23,7 @@ const data = new DataStack(app, 'ZyviaData', {
   env,
   vpc: network.vpc,
   privateSubnets: network.privateSubnets,
-  rdsSecurityGroup: network.rdsSecurityGroup,
+  ecsSecurityGroup: network.ecsSecurityGroup,
 });
 
 const storage = new StorageStack(app, 'ZyviaStorage', { env });
@@ -74,3 +74,14 @@ NagSuppressions.addStackSuppressions(
     },
   ],
 );
+
+NagSuppressions.addStackSuppressions(
+  data,
+  [
+    {
+      id: 'AwsSolutions-SMG4',
+      reason: 'databaseUrlSecret and jwtPublicKeySecret are manually populated — rotation managed by infrastructure operator',
+    },
+  ],
+);
+

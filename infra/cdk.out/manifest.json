@@ -1,6 +1,72 @@
 {
   "version": "52.0.0",
   "artifacts": {
+    "ZyviaFoundation.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "ZyviaFoundation.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "ZyviaFoundation": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://unknown-account/ap-south-1",
+      "properties": {
+        "templateFile": "ZyviaFoundation.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-south-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-south-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-south-1/36c38918cdf48952030531ed0d0b033537723f08304d56dd9929463eb6b1efe2.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "ZyviaFoundation.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-ap-south-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "ZyviaFoundation.assets"
+      ],
+      "metadata": {
+        "/ZyviaFoundation/GitHubOidcRole/Role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GitHubOidcRole134DC53F"
+          }
+        ],
+        "/ZyviaFoundation/GitHubOidcRole/GitHubActionsRoleArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GitHubOidcRoleGitHubActionsRoleArnF2EB4E0E"
+          }
+        ],
+        "/ZyviaFoundation/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/ZyviaFoundation/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/ZyviaFoundation/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "ZyviaFoundation"
+    },
     "ZyviaNetwork.assets": {
       "type": "cdk:asset-manifest",
       "properties": {
@@ -11,21 +77,21 @@
     },
     "ZyviaNetwork": {
       "type": "aws:cloudformation:stack",
-      "environment": "aws://unknown-account/ap-southeast-2",
+      "environment": "aws://unknown-account/ap-south-1",
       "properties": {
         "templateFile": "ZyviaNetwork.template.json",
         "terminationProtection": false,
         "validateOnSynth": false,
-        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-southeast-2",
-        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-southeast-2",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2/4d09b236a4f0956f5a402e15687d4e5fbd6588a06be70d00839eebefc15bc2ce.json",
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-south-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-south-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-south-1/f4624f3e52996c3bfb1d57cb4ac0c34647a43e1692f77d060aeb2fc40437208d.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
           "ZyviaNetwork.assets"
         ],
         "lookupRole": {
-          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-ap-southeast-2",
+          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-ap-south-1",
           "requiresBootstrapStackVersion": 8,
           "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
         }
@@ -202,16 +268,22 @@
             "data": "EcsSecurityGroupfromZyviaNetworkAlbSecurityGroup43302A173000F79068CB"
           }
         ],
-        "/ZyviaNetwork/RdsSecurityGroup/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "RdsSecurityGroup632A77E4"
-          }
-        ],
         "/ZyviaNetwork/CDKMetadata/Default": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CDKMetadata"
+          }
+        ],
+        "/ZyviaNetwork/Exports/Output{\"Fn::GetAtt\":[\"EcsSecurityGroup44008BF1\",\"GroupId\"]}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputFnGetAttEcsSecurityGroup44008BF1GroupIdDE2CA5C5"
+          }
+        ],
+        "/ZyviaNetwork/Exports/Output{\"Ref\":\"Vpc8378EB38\"}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputRefVpc8378EB38272D6E3A"
           }
         ],
         "/ZyviaNetwork/Exports/Output{\"Ref\":\"VpcPrivateSubnet1Subnet536B997A\"}": [
@@ -224,12 +296,6 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "ExportsOutputRefVpcPrivateSubnet2Subnet3788AAA1380949A3"
-          }
-        ],
-        "/ZyviaNetwork/Exports/Output{\"Fn::GetAtt\":[\"RdsSecurityGroup632A77E4\",\"GroupId\"]}": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ExportsOutputFnGetAttRdsSecurityGroup632A77E4GroupId9D343172"
           }
         ],
         "/ZyviaNetwork/Exports/Output{\"Fn::GetAtt\":[\"AlbSecurityGroup86A59E99\",\"GroupId\"]}": [
@@ -248,18 +314,6 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "ExportsOutputRefVpcPublicSubnet2Subnet691E08A351552740"
-          }
-        ],
-        "/ZyviaNetwork/Exports/Output{\"Ref\":\"Vpc8378EB38\"}": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ExportsOutputRefVpc8378EB38272D6E3A"
-          }
-        ],
-        "/ZyviaNetwork/Exports/Output{\"Fn::GetAtt\":[\"EcsSecurityGroup44008BF1\",\"GroupId\"]}": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ExportsOutputFnGetAttEcsSecurityGroup44008BF1GroupIdDE2CA5C5"
           }
         ],
         "/ZyviaNetwork/BootstrapVersion": [
@@ -287,21 +341,21 @@
     },
     "ZyviaData": {
       "type": "aws:cloudformation:stack",
-      "environment": "aws://unknown-account/ap-southeast-2",
+      "environment": "aws://unknown-account/ap-south-1",
       "properties": {
         "templateFile": "ZyviaData.template.json",
         "terminationProtection": false,
         "validateOnSynth": false,
-        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-southeast-2",
-        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-southeast-2",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2/c7a7b990a51a046c62bb7c18a1efdc7d873d7124a75a6977079e69f3d7b352d3.json",
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-south-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-south-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-south-1/12901d3915a8c467506a26d19fe98ddcd70b1fe53ce967f08f575dfae10e7ae9.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
           "ZyviaData.assets"
         ],
         "lookupRole": {
-          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-ap-southeast-2",
+          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-ap-south-1",
           "requiresBootstrapStackVersion": 8,
           "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
         }
@@ -311,6 +365,18 @@
         "ZyviaData.assets"
       ],
       "metadata": {
+        "/ZyviaData/RdsSecurityGroup/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RdsSecurityGroup632A77E4"
+          }
+        ],
+        "/ZyviaData/RdsSecurityGroup/from ZyviaDataDatabaseRotationSingleUserSecurityGroupE348C586:{IndirectPort}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RdsSecurityGroupfromZyviaDataDatabaseRotationSingleUserSecurityGroupE348C586IndirectPort48918D92"
+          }
+        ],
         "/ZyviaData/DbSubnetGroup/Default": [
           {
             "type": "aws:cdk:logicalId",
@@ -321,33 +387,6 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "ZyviaDataDatabaseSecret302669F73fdaad7efa858a3daf9490cf0a702aeb"
-          },
-          {
-            "type": "aws:cdk:error",
-            "data": "AwsSolutions-SMG4: The secret does not have automatic rotation scheduled. AWS Secrets Manager can be configured to automatically rotate the secret for a secured service or database.\n",
-            "trace": [
-              "Annotations.addMessage (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:2066)",
-              "Annotations.addError (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1528)",
-              "AnnotationLogger.onNonCompliance (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-logger.ts:143:39)",
-              "/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:185:17",
-              "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:184:26)",
-              "AwsSolutionsChecks.checkSecurityCompliance (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:1289:10)",
-              "AwsSolutionsChecks.visit (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:206:12)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1895)",
-              "App.synth (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/stage.js:1:3138)",
-              "process.<anonymous> (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/app.js:1:2128)",
-              "Object.onceWrapper (node:events:632:26)",
-              "process.emit (node:events:517:28)",
-              "process.emit (node:domain:489:12)",
-              "process.emit.sharedData.processEmitHook.installedValue [as emit] (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/@cspotcode/source-map-support/source-map-support.js:745:40)"
-            ]
           }
         ],
         "/ZyviaData/Database/Secret/Attachment/Resource": [
@@ -356,126 +395,52 @@
             "data": "DatabaseSecretAttachmentE5D1B020"
           }
         ],
+        "/ZyviaData/Database/Secret/Attachment/RotationSchedule/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DatabaseSecretAttachmentRotationScheduleA4E9F034"
+          }
+        ],
+        "/ZyviaData/Database/Secret/Attachment/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DatabaseSecretAttachmentPolicy5ACFE6CA"
+          }
+        ],
         "/ZyviaData/Database/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DatabaseB269D8BB"
-          },
+          }
+        ],
+        "/ZyviaData/Database/RotationSingleUser/SecurityGroup/Resource": [
           {
-            "type": "aws:cdk:error",
-            "data": "AwsSolutions-RDS3: The non-Aurora RDS DB instance does not have multi-AZ support enabled. Use multi-AZ deployment configurations for high availability and automatic failover support fully managed by AWS.\n",
-            "trace": [
-              "Annotations.addMessage (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:2066)",
-              "Annotations.addError (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1528)",
-              "AnnotationLogger.onNonCompliance (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-logger.ts:143:39)",
-              "/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:185:17",
-              "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:184:26)",
-              "AwsSolutionsChecks.checkDatabases (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:463:10)",
-              "AwsSolutionsChecks.visit (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:201:12)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1895)",
-              "App.synth (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/stage.js:1:3138)",
-              "process.<anonymous> (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/app.js:1:2128)",
-              "Object.onceWrapper (node:events:632:26)",
-              "process.emit (node:events:517:28)",
-              "process.emit (node:domain:489:12)",
-              "process.emit.sharedData.processEmitHook.installedValue [as emit] (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/@cspotcode/source-map-support/source-map-support.js:745:40)"
-            ]
-          },
+            "type": "aws:cdk:logicalId",
+            "data": "DatabaseRotationSingleUserSecurityGroupAC6E0E73"
+          }
+        ],
+        "/ZyviaData/Database/RotationSingleUser/SARMapping": [
           {
-            "type": "aws:cdk:error",
-            "data": "AwsSolutions-RDS11: The RDS instance or Aurora DB cluster uses the default endpoint port. Port obfuscation (using a non default endpoint port) adds an additional layer of defense against non-targeted attacks (i.e. MySQL/Aurora port 3306, SQL Server port 1433, PostgreSQL port 5432, etc).\n",
-            "trace": [
-              "Annotations.addMessage (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:2066)",
-              "Annotations.addError (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1528)",
-              "AnnotationLogger.onNonCompliance (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-logger.ts:143:39)",
-              "/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:185:17",
-              "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:184:26)",
-              "AwsSolutionsChecks.checkDatabases (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:499:10)",
-              "AwsSolutionsChecks.visit (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:201:12)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1895)",
-              "App.synth (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/stage.js:1:3138)",
-              "process.<anonymous> (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/app.js:1:2128)",
-              "Object.onceWrapper (node:events:632:26)",
-              "process.emit (node:events:517:28)",
-              "process.emit (node:domain:489:12)",
-              "process.emit.sharedData.processEmitHook.installedValue [as emit] (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/@cspotcode/source-map-support/source-map-support.js:745:40)"
-            ]
+            "type": "aws:cdk:logicalId",
+            "data": "DatabaseRotationSingleUserSARMapping9AEB3E55"
+          }
+        ],
+        "/ZyviaData/Database/RotationSingleUser/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DatabaseRotationSingleUser65F55654"
           }
         ],
         "/ZyviaData/DatabaseUrlSecret/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DatabaseUrlSecretFA7DE062"
-          },
-          {
-            "type": "aws:cdk:error",
-            "data": "AwsSolutions-SMG4: The secret does not have automatic rotation scheduled. AWS Secrets Manager can be configured to automatically rotate the secret for a secured service or database.\n",
-            "trace": [
-              "Annotations.addMessage (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:2066)",
-              "Annotations.addError (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1528)",
-              "AnnotationLogger.onNonCompliance (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-logger.ts:143:39)",
-              "/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:185:17",
-              "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:184:26)",
-              "AwsSolutionsChecks.checkSecurityCompliance (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:1289:10)",
-              "AwsSolutionsChecks.visit (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:206:12)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1895)",
-              "App.synth (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/stage.js:1:3138)",
-              "process.<anonymous> (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/app.js:1:2128)",
-              "Object.onceWrapper (node:events:632:26)",
-              "process.emit (node:events:517:28)",
-              "process.emit (node:domain:489:12)",
-              "process.emit.sharedData.processEmitHook.installedValue [as emit] (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/@cspotcode/source-map-support/source-map-support.js:745:40)"
-            ]
           }
         ],
         "/ZyviaData/JwtPublicKeySecret/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "JwtPublicKeySecret356FEBF8"
-          },
-          {
-            "type": "aws:cdk:error",
-            "data": "AwsSolutions-SMG4: The secret does not have automatic rotation scheduled. AWS Secrets Manager can be configured to automatically rotate the secret for a secured service or database.\n",
-            "trace": [
-              "Annotations.addMessage (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:2066)",
-              "Annotations.addError (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1528)",
-              "AnnotationLogger.onNonCompliance (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-logger.ts:143:39)",
-              "/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:185:17",
-              "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:184:26)",
-              "AwsSolutionsChecks.checkSecurityCompliance (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:1289:10)",
-              "AwsSolutionsChecks.visit (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:206:12)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1895)",
-              "App.synth (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/stage.js:1:3138)",
-              "process.<anonymous> (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/app.js:1:2128)",
-              "Object.onceWrapper (node:events:632:26)",
-              "process.emit (node:events:517:28)",
-              "process.emit (node:domain:489:12)",
-              "process.emit.sharedData.processEmitHook.installedValue [as emit] (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/@cspotcode/source-map-support/source-map-support.js:745:40)"
-            ]
           }
         ],
         "/ZyviaData/DbInstanceEndpoint": [
@@ -533,21 +498,21 @@
     },
     "ZyviaStorage": {
       "type": "aws:cloudformation:stack",
-      "environment": "aws://unknown-account/ap-southeast-2",
+      "environment": "aws://unknown-account/ap-south-1",
       "properties": {
         "templateFile": "ZyviaStorage.template.json",
         "terminationProtection": false,
         "validateOnSynth": false,
-        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-southeast-2",
-        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-southeast-2",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2/6dbe883cedc921bbb102383c0a88f364b0995b9391cea56cac8b4b734d7356a9.json",
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-south-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-south-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-south-1/61c2213d393532e4cd2fbc7c290e25da0469ffd3384b69826217ab824b87ebb6.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
           "ZyviaStorage.assets"
         ],
         "lookupRole": {
-          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-ap-southeast-2",
+          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-ap-south-1",
           "requiresBootstrapStackVersion": 8,
           "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
         }
@@ -556,95 +521,28 @@
         "ZyviaStorage.assets"
       ],
       "metadata": {
+        "/ZyviaStorage/LoggingBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LoggingBucket1E5A6F3B"
+          }
+        ],
+        "/ZyviaStorage/LoggingBucket/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LoggingBucketPolicy21938756"
+          }
+        ],
         "/ZyviaStorage/HealthRecordsBucket/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "HealthRecordsBucket28A5ADA9"
-          },
-          {
-            "type": "aws:cdk:error",
-            "data": "AwsSolutions-S1: The S3 Bucket has server access logs disabled. The bucket should have server access logging enabled to provide detailed records for the requests that are made to the bucket.\n",
-            "trace": [
-              "Annotations.addMessage (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:2066)",
-              "Annotations.addError (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1528)",
-              "AnnotationLogger.onNonCompliance (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-logger.ts:143:39)",
-              "/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:185:17",
-              "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:184:26)",
-              "AwsSolutionsChecks.checkStorage (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:401:10)",
-              "AwsSolutionsChecks.visit (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:200:12)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1895)",
-              "App.synth (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/stage.js:1:3138)",
-              "process.<anonymous> (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/app.js:1:2128)",
-              "Object.onceWrapper (node:events:632:26)",
-              "process.emit (node:events:517:28)",
-              "process.emit (node:domain:489:12)",
-              "process.emit.sharedData.processEmitHook.installedValue [as emit] (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/@cspotcode/source-map-support/source-map-support.js:745:40)"
-            ]
-          },
-          {
-            "type": "aws:cdk:error",
-            "data": "AwsSolutions-S10: The S3 Bucket or bucket policy does not require requests to use SSL. You can use HTTPS (TLS) to help prevent potential attackers from eavesdropping on or manipulating network traffic using person-in-the-middle or similar attacks. You should allow only encrypted connections over HTTPS (TLS) using the aws:SecureTransport condition on Amazon S3 bucket policies.\n",
-            "trace": [
-              "Annotations.addMessage (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:2066)",
-              "Annotations.addError (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1528)",
-              "AnnotationLogger.onNonCompliance (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-logger.ts:143:39)",
-              "/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:185:17",
-              "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:184:26)",
-              "AwsSolutionsChecks.checkStorage (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:428:10)",
-              "AwsSolutionsChecks.visit (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:200:12)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1895)",
-              "App.synth (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/stage.js:1:3138)",
-              "process.<anonymous> (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/app.js:1:2128)",
-              "Object.onceWrapper (node:events:632:26)",
-              "process.emit (node:events:517:28)",
-              "process.emit (node:domain:489:12)",
-              "process.emit.sharedData.processEmitHook.installedValue [as emit] (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/@cspotcode/source-map-support/source-map-support.js:745:40)"
-            ]
           }
         ],
         "/ZyviaStorage/HealthRecordsBucket/Policy/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "HealthRecordsBucketPolicy4D686535"
-          },
-          {
-            "type": "aws:cdk:error",
-            "data": "AwsSolutions-S10: The S3 Bucket or bucket policy does not require requests to use SSL. You can use HTTPS (TLS) to help prevent potential attackers from eavesdropping on or manipulating network traffic using person-in-the-middle or similar attacks. You should allow only encrypted connections over HTTPS (TLS) using the aws:SecureTransport condition on Amazon S3 bucket policies.\n",
-            "trace": [
-              "Annotations.addMessage (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:2066)",
-              "Annotations.addError (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1528)",
-              "AnnotationLogger.onNonCompliance (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-logger.ts:143:39)",
-              "/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:185:17",
-              "Array.forEach (<anonymous>)",
-              "AwsSolutionsChecks.applyRule (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/nag-pack.ts:184:26)",
-              "AwsSolutionsChecks.checkStorage (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:428:10)",
-              "AwsSolutionsChecks.visit (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/cdk-nag/src/packs/aws-solutions.ts:200:12)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4537)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "recurse (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:4772)",
-              "invokeAspectsV2 (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:2:3163)",
-              "synthesize (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/private/synthesis.js:1:1895)",
-              "App.synth (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/stage.js:1:3138)",
-              "process.<anonymous> (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/app.js:1:2128)",
-              "Object.onceWrapper (node:events:632:26)",
-              "process.emit (node:events:517:28)",
-              "process.emit (node:domain:489:12)",
-              "process.emit.sharedData.processEmitHook.installedValue [as emit] (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/@cspotcode/source-map-support/source-map-support.js:745:40)"
-            ]
           }
         ],
         "/ZyviaStorage/HealthRecordsBucketName": [
@@ -696,21 +594,21 @@
     },
     "ZyviaCompute": {
       "type": "aws:cloudformation:stack",
-      "environment": "aws://unknown-account/ap-southeast-2",
+      "environment": "aws://unknown-account/ap-south-1",
       "properties": {
         "templateFile": "ZyviaCompute.template.json",
         "terminationProtection": false,
         "validateOnSynth": false,
-        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-southeast-2",
-        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-southeast-2",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2/0a215827e771ced93e8fb32fe9076ad76d97bf3512046c3aa5d1ee9af0f818bd.json",
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-south-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-south-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-south-1/e0acc19b06127b39f0051fef3ed04bfaeb011267dd3ea6a8c778808d42292daa.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
           "ZyviaCompute.assets"
         ],
         "lookupRole": {
-          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-ap-southeast-2",
+          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-ap-south-1",
           "requiresBootstrapStackVersion": 8,
           "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
         }
@@ -1043,16 +941,10 @@
             ]
           }
         ],
-        "/ZyviaCompute/Alb/HttpsListener/Resource": [
+        "/ZyviaCompute/Alb/HttpListener/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "AlbHttpsListener2ADA614F"
-          }
-        ],
-        "/ZyviaCompute/Alb/HttpRedirectListener/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "AlbHttpRedirectListener2B61A85C"
+            "data": "AlbHttpListener00C8B33E"
           }
         ],
         "/ZyviaCompute/TargetGroup/Resource": [
@@ -1071,8 +963,8 @@
               "new BaseService2 (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/aws-ecs/lib/base/base-service.js:1:12364)",
               "new FargateService2 (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/aws-ecs/lib/fargate/fargate-service.js:1:6371)",
               "new FargateService2 (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/aws-cdk-lib/core/lib/prop-injectable.js:1:681)",
-              "new ComputeStack (/Users/thoshi/Documents/GitHub/zyvia-api/infra/lib/compute-stack.ts:168:27)",
-              "Object.<anonymous> (/Users/thoshi/Documents/GitHub/zyvia-api/infra/bin/app.ts:31:17)",
+              "new ComputeStack (/Users/thoshi/Documents/GitHub/zyvia-api/infra/lib/compute-stack.ts:150:27)",
+              "Object.<anonymous> (/Users/thoshi/Documents/GitHub/zyvia-api/infra/bin/app.ts:39:17)",
               "Module._compile (node:internal/modules/cjs/loader:1364:14)",
               "Module.m._compile (/Users/thoshi/Documents/GitHub/zyvia-api/infra/node_modules/ts-node/src/index.ts:1618:23)",
               "Module._extensions..js (node:internal/modules/cjs/loader:1422:10)",
@@ -1190,21 +1082,21 @@
     },
     "ZyviaObservability": {
       "type": "aws:cloudformation:stack",
-      "environment": "aws://unknown-account/ap-southeast-2",
+      "environment": "aws://unknown-account/ap-south-1",
       "properties": {
         "templateFile": "ZyviaObservability.template.json",
         "terminationProtection": false,
         "validateOnSynth": false,
-        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-southeast-2",
-        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-southeast-2",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2/44df4d6318256fc09a4ee5ffa780be5e30f19126fb9cd066f0de5900ec1463d0.json",
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-ap-south-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-ap-south-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-ap-south-1/44df4d6318256fc09a4ee5ffa780be5e30f19126fb9cd066f0de5900ec1463d0.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
           "ZyviaObservability.assets"
         ],
         "lookupRole": {
-          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-ap-southeast-2",
+          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-ap-south-1",
           "requiresBootstrapStackVersion": 8,
           "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
         }

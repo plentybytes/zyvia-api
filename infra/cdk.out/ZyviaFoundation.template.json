@@ -1,0 +1,101 @@
+{
+ "Resources": {
+  "GitHubOidcRole134DC53F": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRoleWithWebIdentity",
+       "Condition": {
+        "StringEquals": {
+         "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+        },
+        "StringLike": {
+         "token.actions.githubusercontent.com:sub": "repo:plentybytes/zyvia-api:ref:refs/heads/main"
+        }
+       },
+       "Effect": "Allow",
+       "Principal": {
+        "Federated": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:aws:iam::",
+           {
+            "Ref": "AWS::AccountId"
+           },
+           ":oidc-provider/token.actions.githubusercontent.com"
+          ]
+         ]
+        }
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "GitHub Actions OIDC role for plentybytes/zyvia-api (main)"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaFoundation/GitHubOidcRole/Role/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/yXGQQ5AMBAAwLe4t6saB3cPkNQDpGolS7ViWw7i7yJOMxp0XYEq7MXSTav0NMLdJ+tWYZBjPhwKe/FAdoPbRI+incPn86XLac/pESFOCAuXZ9WAVtAUCxPJI4dEG4L5fQE3QOTNawAAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaFoundation/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "GitHubOidcRoleGitHubActionsRoleArnF2EB4E0E": {
+   "Description": "IAM role ARN for GitHub Actions OIDC — set as AWS_DEPLOY_ROLE_ARN in repo secrets",
+   "Value": {
+    "Fn::GetAtt": [
+     "GitHubOidcRole134DC53F",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "GitHubActionsRoleArn"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

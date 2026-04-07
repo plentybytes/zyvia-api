@@ -8,7 +8,7 @@
      "is_reason_encoded": true
     },
     {
-     "reason": "QUxCIFNHIGludGVudGlvbmFsbHkgYWxsb3dzIDAuMC4wLjAvMCBvbiA0NDMg4oCUIHB1YmxpYy1mYWNpbmcgbG9hZCBiYWxhbmNlcg==",
+     "reason": "QUxCIFNHIGludGVudGlvbmFsbHkgYWxsb3dzIDAuMC4wLjAvMCBvbiA4MCDigJQgcHVibGljLWZhY2luZyBIVFRQLW9ubHkgbG9hZCBiYWxhbmNlcg==",
      "id": "AwsSolutions-EC23",
      "is_reason_encoded": true
     }
@@ -502,7 +502,7 @@
              {
               "Ref": "AWS::Partition"
              },
-             ":ec2:ap-southeast-2:",
+             ":ec2:ap-south-1:",
              {
               "Ref": "AWS::AccountId"
              },
@@ -532,7 +532,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": {
-      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-southeast-2"
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-south-1"
      },
      "S3Key": "7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200.zip"
     },
@@ -560,7 +560,7 @@
   "AlbSecurityGroup86A59E99": {
    "Type": "AWS::EC2::SecurityGroup",
    "Properties": {
-    "GroupDescription": "ALB Security Group — allows HTTPS and HTTP from anywhere",
+    "GroupDescription": "ALB Security Group — allows HTTP from anywhere",
     "SecurityGroupEgress": [
      {
       "CidrIp": "0.0.0.0/0",
@@ -571,14 +571,7 @@
     "SecurityGroupIngress": [
      {
       "CidrIp": "0.0.0.0/0",
-      "Description": "HTTPS from anywhere",
-      "FromPort": 443,
-      "IpProtocol": "tcp",
-      "ToPort": 443
-     },
-     {
-      "CidrIp": "0.0.0.0/0",
-      "Description": "HTTP redirect from anywhere",
+      "Description": "HTTP from anywhere",
       "FromPort": 80,
       "IpProtocol": "tcp",
       "ToPort": 80
@@ -649,41 +642,6 @@
     "aws:cdk:path": "ZyviaNetwork/EcsSecurityGroup/from ZyviaNetworkAlbSecurityGroup43302A17:3000"
    }
   },
-  "RdsSecurityGroup632A77E4": {
-   "Type": "AWS::EC2::SecurityGroup",
-   "Properties": {
-    "GroupDescription": "RDS Security Group — allows PostgreSQL from ECS only",
-    "SecurityGroupEgress": [
-     {
-      "CidrIp": "255.255.255.255/32",
-      "Description": "Disallow all traffic",
-      "FromPort": 252,
-      "IpProtocol": "icmp",
-      "ToPort": 86
-     }
-    ],
-    "SecurityGroupIngress": [
-     {
-      "Description": "PostgreSQL from ECS",
-      "FromPort": 5432,
-      "IpProtocol": "tcp",
-      "SourceSecurityGroupId": {
-       "Fn::GetAtt": [
-        "EcsSecurityGroup44008BF1",
-        "GroupId"
-       ]
-      },
-      "ToPort": 5432
-     }
-    ],
-    "VpcId": {
-     "Ref": "Vpc8378EB38"
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "ZyviaNetwork/RdsSecurityGroup/Resource"
-   }
-  },
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
@@ -695,6 +653,25 @@
   }
  },
  "Outputs": {
+  "ExportsOutputFnGetAttEcsSecurityGroup44008BF1GroupIdDE2CA5C5": {
+   "Value": {
+    "Fn::GetAtt": [
+     "EcsSecurityGroup44008BF1",
+     "GroupId"
+    ]
+   },
+   "Export": {
+    "Name": "ZyviaNetwork:ExportsOutputFnGetAttEcsSecurityGroup44008BF1GroupIdDE2CA5C5"
+   }
+  },
+  "ExportsOutputRefVpc8378EB38272D6E3A": {
+   "Value": {
+    "Ref": "Vpc8378EB38"
+   },
+   "Export": {
+    "Name": "ZyviaNetwork:ExportsOutputRefVpc8378EB38272D6E3A"
+   }
+  },
   "ExportsOutputRefVpcPrivateSubnet1Subnet536B997AFD4CC940": {
    "Value": {
     "Ref": "VpcPrivateSubnet1Subnet536B997A"
@@ -709,17 +686,6 @@
    },
    "Export": {
     "Name": "ZyviaNetwork:ExportsOutputRefVpcPrivateSubnet2Subnet3788AAA1380949A3"
-   }
-  },
-  "ExportsOutputFnGetAttRdsSecurityGroup632A77E4GroupId9D343172": {
-   "Value": {
-    "Fn::GetAtt": [
-     "RdsSecurityGroup632A77E4",
-     "GroupId"
-    ]
-   },
-   "Export": {
-    "Name": "ZyviaNetwork:ExportsOutputFnGetAttRdsSecurityGroup632A77E4GroupId9D343172"
    }
   },
   "ExportsOutputFnGetAttAlbSecurityGroup86A59E99GroupIdE3A37BC7": {
@@ -747,25 +713,6 @@
    },
    "Export": {
     "Name": "ZyviaNetwork:ExportsOutputRefVpcPublicSubnet2Subnet691E08A351552740"
-   }
-  },
-  "ExportsOutputRefVpc8378EB38272D6E3A": {
-   "Value": {
-    "Ref": "Vpc8378EB38"
-   },
-   "Export": {
-    "Name": "ZyviaNetwork:ExportsOutputRefVpc8378EB38272D6E3A"
-   }
-  },
-  "ExportsOutputFnGetAttEcsSecurityGroup44008BF1GroupIdDE2CA5C5": {
-   "Value": {
-    "Fn::GetAtt": [
-     "EcsSecurityGroup44008BF1",
-     "GroupId"
-    ]
-   },
-   "Export": {
-    "Name": "ZyviaNetwork:ExportsOutputFnGetAttEcsSecurityGroup44008BF1GroupIdDE2CA5C5"
    }
   }
  },

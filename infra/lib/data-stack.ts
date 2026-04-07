@@ -7,7 +7,7 @@ import { Construct } from 'constructs';
 export interface DataStackProps extends cdk.StackProps {
   readonly vpc: ec2.IVpc;
   readonly privateSubnets: ec2.ISubnet[];
-  readonly rdsSecurityGroup: ec2.ISecurityGroup;
+  readonly ecsSecurityGroup: ec2.ISecurityGroup;
 }
 
 export class DataStack extends cdk.Stack {
@@ -18,7 +18,19 @@ export class DataStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: DataStackProps) {
     super(scope, id, props);
 
-    const { vpc, privateSubnets, rdsSecurityGroup } = props;
+    const { vpc, privateSubnets, ecsSecurityGroup } = props;
+
+    // Create RDS security group within DataStack to avoid circular dependency
+    const rdsSecurityGroup = new ec2.SecurityGroup(this, 'RdsSecurityGroup', {
+      vpc,
+      description: 'RDS Security Group — allows PostgreSQL from ECS on port 5433',
+      allowAllOutbound: false,
+    });
+    rdsSecurityGroup.addIngressRule(
+      ec2.Peer.securityGroupId(ecsSecurityGroup.securityGroupId),
+      ec2.Port.tcp(5433),
+      'PostgreSQL from ECS',
+    );
 
     const subnetGroup = new rds.SubnetGroup(this, 'DbSubnetGroup', {
       vpc,
@@ -41,12 +53,18 @@ export class DataStack extends cdk.Stack {
       vpcSubnets: { subnets: privateSubnets },
       subnetGroup,
       securityGroups: [rdsSecurityGroup],
-      multiAz: false,
+      multiAz: true,
       storageEncrypted: true,
       backupRetention: cdk.Duration.days(7),
       deletionProtection: true,
       databaseName: 'zyvia',
+      port: 5433,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    // Enable automatic secret rotation every 30 days
+    this.dbInstance.addRotationSingleUser({
+      automaticallyAfter: cdk.Duration.days(30),
     });
 
     // Constructed DATABASE_URL secret (referenced by ECS task)

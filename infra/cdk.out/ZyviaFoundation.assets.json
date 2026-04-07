@@ -1,16 +1,16 @@
 {
   "version": "52.0.0",
   "files": {
-    "12901d3915a8c467506a26d19fe98ddcd70b1fe53ce967f08f575dfae10e7ae9": {
-      "displayName": "ZyviaData Template",
+    "36c38918cdf48952030531ed0d0b033537723f08304d56dd9929463eb6b1efe2": {
+      "displayName": "ZyviaFoundation Template",
       "source": {
-        "path": "ZyviaData.template.json",
+        "path": "ZyviaFoundation.template.json",
         "packaging": "file"
       },
       "destinations": {
-        "current_account-ap-south-1-ad138add": {
+        "current_account-ap-south-1-03b9ad51": {
           "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-south-1",
-          "objectKey": "12901d3915a8c467506a26d19fe98ddcd70b1fe53ce967f08f575dfae10e7ae9.json",
+          "objectKey": "36c38918cdf48952030531ed0d0b033537723f08304d56dd9929463eb6b1efe2.json",
           "region": "ap-south-1",
           "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-ap-south-1"
         }

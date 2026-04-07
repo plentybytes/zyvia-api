@@ -8,7 +8,6 @@ export class NetworkStack extends cdk.Stack {
   public readonly publicSubnets: ec2.ISubnet[];
   public readonly albSecurityGroup: ec2.SecurityGroup;
   public readonly ecsSecurityGroup: ec2.SecurityGroup;
-  public readonly rdsSecurityGroup: ec2.SecurityGroup;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -53,18 +52,6 @@ export class NetworkStack extends cdk.Stack {
       ec2.Peer.securityGroupId(this.albSecurityGroup.securityGroupId),
       ec2.Port.tcp(3000),
       'Port 3000 from ALB',
-    );
-
-    // RDS security group — allows port 5432 from ECS only
-    this.rdsSecurityGroup = new ec2.SecurityGroup(this, 'RdsSecurityGroup', {
-      vpc: this.vpc,
-      description: 'RDS Security Group — allows PostgreSQL from ECS only',
-      allowAllOutbound: false,
-    });
-    this.rdsSecurityGroup.addIngressRule(
-      ec2.Peer.securityGroupId(this.ecsSecurityGroup.securityGroupId),
-      ec2.Port.tcp(5432),
-      'PostgreSQL from ECS',
     );
   }
 }

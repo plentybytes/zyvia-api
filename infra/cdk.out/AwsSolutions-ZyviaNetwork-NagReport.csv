@@ -1,9 +1,7 @@
 Rule ID,Resource ID,Compliance,Exception Reason,Rule Level,Rule Info
 "AwsSolutions-VPC7","ZyviaNetwork/Vpc/Resource","Suppressed","VPC Flow Logs omitted for v1 cost optimisation — add before production use","Error","The VPC does not have an associated Flow Log."
-"AwsSolutions-EC23","ZyviaNetwork/AlbSecurityGroup/Resource","Suppressed","ALB SG intentionally allows 0.0.0.0/0 on 443 — public-facing load balancer","Error","The Security Group allows for 0.0.0.0/0 or ::/0 inbound access."
+"AwsSolutions-EC23","ZyviaNetwork/AlbSecurityGroup/Resource","Suppressed","ALB SG intentionally allows 0.0.0.0/0 on 80 — public-facing HTTP-only load balancer","Error","The Security Group allows for 0.0.0.0/0 or ::/0 inbound access."
 "AwsSolutions-EC27","ZyviaNetwork/AlbSecurityGroup/Resource","Compliant","N/A","Error","The Security Group does not have a description."
 "AwsSolutions-EC23","ZyviaNetwork/EcsSecurityGroup/Resource","Compliant","N/A","Error","The Security Group allows for 0.0.0.0/0 or ::/0 inbound access."
 "AwsSolutions-EC27","ZyviaNetwork/EcsSecurityGroup/Resource","Compliant","N/A","Error","The Security Group does not have a description."
 "AwsSolutions-EC23","ZyviaNetwork/EcsSecurityGroup/from ZyviaNetworkAlbSecurityGroup43302A17:3000","Compliant","N/A","Error","The Security Group allows for 0.0.0.0/0 or ::/0 inbound access."
-"AwsSolutions-EC23","ZyviaNetwork/RdsSecurityGroup/Resource","Compliant","N/A","Error","The Security Group allows for 0.0.0.0/0 or ::/0 inbound access."
-"AwsSolutions-EC27","ZyviaNetwork/RdsSecurityGroup/Resource","Compliant","N/A","Error","The Security Group does not have a description."

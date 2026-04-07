@@ -1,5 +1,110 @@
 {
  "Resources": {
+  "LoggingBucket1E5A6F3B": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "AccessControl": "LogDeliveryWrite",
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "BucketName": {
+     "Fn::Join": [
+      "",
+      [
+       "zyvia-access-logs-",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       "-ap-south-1"
+      ]
+     ]
+    },
+    "LifecycleConfiguration": {
+     "Rules": [
+      {
+       "ExpirationInDays": 90,
+       "Id": "DeleteOldLogs",
+       "Status": "Enabled"
+      }
+     ]
+    },
+    "OwnershipControls": {
+     "Rules": [
+      {
+       "ObjectOwnership": "ObjectWriter"
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ZyviaStorage/LoggingBucket/Resource"
+   }
+  },
+  "LoggingBucketPolicy21938756": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "LoggingBucket1E5A6F3B"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:*",
+       "Condition": {
+        "Bool": {
+         "aws:SecureTransport": "false"
+        }
+       },
+       "Effect": "Deny",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "LoggingBucket1E5A6F3B",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "LoggingBucket1E5A6F3B",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ],
+       "Sid": "DenyNonHttpsAccessToLogs"
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaStorage/LoggingBucket/Policy/Resource"
+   }
+  },
   "HealthRecordsBucket28A5ADA9": {
    "Type": "AWS::S3::Bucket",
    "Properties": {
@@ -20,7 +125,7 @@
        {
         "Ref": "AWS::AccountId"
        },
-       "-ap-southeast-2"
+       "-ap-south-1"
       ]
      ]
     },
@@ -37,6 +142,12 @@
        ]
       }
      ]
+    },
+    "LoggingConfiguration": {
+     "DestinationBucketName": {
+      "Ref": "LoggingBucket1E5A6F3B"
+     },
+     "LogFilePrefix": "health-records-access/"
     },
     "PublicAccessBlockConfiguration": {
      "BlockPublicAcls": true,
@@ -62,6 +173,41 @@
     },
     "PolicyDocument": {
      "Statement": [
+      {
+       "Action": "s3:*",
+       "Condition": {
+        "Bool": {
+         "aws:SecureTransport": "false"
+        }
+       },
+       "Effect": "Deny",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "HealthRecordsBucket28A5ADA9",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "HealthRecordsBucket28A5ADA9",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ],
+       "Sid": "DenyNonHttpsAccess"
+      },
       {
        "Action": "s3:GetObject",
        "Condition": {

@@ -1,5 +1,83 @@
 {
+ "Transform": "AWS::Serverless-2016-10-31",
+ "Metadata": {
+  "cdk_nag": {
+   "rules_to_suppress": [
+    {
+     "reason": "ZGF0YWJhc2VVcmxTZWNyZXQgYW5kIGp3dFB1YmxpY0tleVNlY3JldCBhcmUgbWFudWFsbHkgcG9wdWxhdGVkIOKAlCByb3RhdGlvbiBtYW5hZ2VkIGJ5IGluZnJhc3RydWN0dXJlIG9wZXJhdG9y",
+     "id": "AwsSolutions-SMG4",
+     "is_reason_encoded": true
+    }
+   ]
+  }
+ },
  "Resources": {
+  "RdsSecurityGroup632A77E4": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "RDS Security Group — allows PostgreSQL from ECS on port 5433",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "255.255.255.255/32",
+      "Description": "Disallow all traffic",
+      "FromPort": 252,
+      "IpProtocol": "icmp",
+      "ToPort": 86
+     }
+    ],
+    "SecurityGroupIngress": [
+     {
+      "Description": "PostgreSQL from ECS",
+      "FromPort": 5433,
+      "IpProtocol": "tcp",
+      "SourceSecurityGroupId": {
+       "Fn::ImportValue": "ZyviaNetwork:ExportsOutputFnGetAttEcsSecurityGroup44008BF1GroupIdDE2CA5C5"
+      },
+      "ToPort": 5433
+     }
+    ],
+    "VpcId": {
+     "Fn::ImportValue": "ZyviaNetwork:ExportsOutputRefVpc8378EB38272D6E3A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaData/RdsSecurityGroup/Resource"
+   }
+  },
+  "RdsSecurityGroupfromZyviaDataDatabaseRotationSingleUserSecurityGroupE348C586IndirectPort48918D92": {
+   "Type": "AWS::EC2::SecurityGroupIngress",
+   "Properties": {
+    "Description": "from ZyviaDataDatabaseRotationSingleUserSecurityGroupE348C586:{IndirectPort}",
+    "FromPort": {
+     "Fn::GetAtt": [
+      "DatabaseB269D8BB",
+      "Endpoint.Port"
+     ]
+    },
+    "GroupId": {
+     "Fn::GetAtt": [
+      "RdsSecurityGroup632A77E4",
+      "GroupId"
+     ]
+    },
+    "IpProtocol": "tcp",
+    "SourceSecurityGroupId": {
+     "Fn::GetAtt": [
+      "DatabaseRotationSingleUserSecurityGroupAC6E0E73",
+      "GroupId"
+     ]
+    },
+    "ToPort": {
+     "Fn::GetAtt": [
+      "DatabaseB269D8BB",
+      "Endpoint.Port"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaData/RdsSecurityGroup/from ZyviaDataDatabaseRotationSingleUserSecurityGroupE348C586:{IndirectPort}"
+   }
+  },
   "DbSubnetGroup": {
    "Type": "AWS::RDS::DBSubnetGroup",
    "Properties": {
@@ -60,6 +138,65 @@
     "aws:cdk:path": "ZyviaData/Database/Secret/Attachment/Resource"
    }
   },
+  "DatabaseSecretAttachmentRotationScheduleA4E9F034": {
+   "Type": "AWS::SecretsManager::RotationSchedule",
+   "Properties": {
+    "RotationLambdaARN": {
+     "Fn::GetAtt": [
+      "DatabaseRotationSingleUser65F55654",
+      "Outputs.RotationLambdaARN"
+     ]
+    },
+    "RotationRules": {
+     "ScheduleExpression": "rate(30 days)"
+    },
+    "SecretId": {
+     "Ref": "DatabaseSecretAttachmentE5D1B020"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaData/Database/Secret/Attachment/RotationSchedule/Resource"
+   }
+  },
+  "DatabaseSecretAttachmentPolicy5ACFE6CA": {
+   "Type": "AWS::SecretsManager::ResourcePolicy",
+   "Properties": {
+    "ResourcePolicy": {
+     "Statement": [
+      {
+       "Action": "secretsmanager:DeleteSecret",
+       "Effect": "Deny",
+       "Principal": {
+        "AWS": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::",
+           {
+            "Ref": "AWS::AccountId"
+           },
+           ":root"
+          ]
+         ]
+        }
+       },
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "SecretId": {
+     "Ref": "DatabaseSecretAttachmentE5D1B020"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaData/Database/Secret/Attachment/Policy/Resource"
+   }
+  },
   "DatabaseB269D8BB": {
    "Type": "AWS::RDS::DBInstance",
    "Properties": {
@@ -87,13 +224,17 @@
      ]
     },
     "MasterUsername": "zyvia_admin",
-    "MultiAZ": false,
+    "MultiAZ": true,
+    "Port": "5433",
     "PubliclyAccessible": false,
     "StorageEncrypted": true,
     "StorageType": "gp2",
     "VPCSecurityGroups": [
      {
-      "Fn::ImportValue": "ZyviaNetwork:ExportsOutputFnGetAttRdsSecurityGroup632A77E4GroupId9D343172"
+      "Fn::GetAtt": [
+       "RdsSecurityGroup632A77E4",
+       "GroupId"
+      ]
      }
     ]
    },
@@ -101,6 +242,90 @@
    "DeletionPolicy": "Retain",
    "Metadata": {
     "aws:cdk:path": "ZyviaData/Database/Resource"
+   }
+  },
+  "DatabaseRotationSingleUserSecurityGroupAC6E0E73": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "ZyviaData/Database/RotationSingleUser/SecurityGroup",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "VpcId": {
+     "Fn::ImportValue": "ZyviaNetwork:ExportsOutputRefVpc8378EB38272D6E3A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ZyviaData/Database/RotationSingleUser/SecurityGroup/Resource"
+   }
+  },
+  "DatabaseRotationSingleUser65F55654": {
+   "Type": "AWS::Serverless::Application",
+   "Properties": {
+    "Location": {
+     "ApplicationId": {
+      "Fn::FindInMap": [
+       "DatabaseRotationSingleUserSARMapping9AEB3E55",
+       {
+        "Ref": "AWS::Partition"
+       },
+       "applicationId"
+      ]
+     },
+     "SemanticVersion": {
+      "Fn::FindInMap": [
+       "DatabaseRotationSingleUserSARMapping9AEB3E55",
+       {
+        "Ref": "AWS::Partition"
+       },
+       "semanticVersion"
+      ]
+     }
+    },
+    "Parameters": {
+     "endpoint": {
+      "Fn::Join": [
+       "",
+       [
+        "https://secretsmanager.ap-south-1.",
+        {
+         "Ref": "AWS::URLSuffix"
+        }
+       ]
+      ]
+     },
+     "functionName": "ZyviaDataDatabaseRotationSingleUser5008B347",
+     "vpcSubnetIds": {
+      "Fn::Join": [
+       "",
+       [
+        {
+         "Fn::ImportValue": "ZyviaNetwork:ExportsOutputRefVpcPrivateSubnet1Subnet536B997AFD4CC940"
+        },
+        ",",
+        {
+         "Fn::ImportValue": "ZyviaNetwork:ExportsOutputRefVpcPrivateSubnet2Subnet3788AAA1380949A3"
+        }
+       ]
+      ]
+     },
+     "vpcSecurityGroupIds": {
+      "Fn::GetAtt": [
+       "DatabaseRotationSingleUserSecurityGroupAC6E0E73",
+       "GroupId"
+      ]
+     },
+     "excludeCharacters": " %+~`#$&*()|[]{}:;<>?!'/@\"\\"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "ZyviaData/Database/RotationSingleUser/Resource"
    }
   },
   "DatabaseUrlSecretFA7DE062": {
@@ -132,10 +357,26 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/3WLsQ6CQBAFv4UeViEWtiqJsTIRe7McqwKymNs9Kcj9u5FTY2M1ycx7GWSLFOYRDpKYqk1udQljoWjaGAc5jbYSGAtXMunW9u4eb86cr39FjoolCu1YFNnQVxRkLGk4fKKPZbLSIeOFLIybM7+HAUe0F9KVKpprRzz9/5SgvX9N9k7vTn3MfUXQyOyRLiGbwzJqpK4T61jrjuAQ+ATl2Bxj9QAAAA=="
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/32NTW/CMAyGfwv3NINqB658aIjDtKndfXJTUwKtE8XOEKr636eSUW1C2sn28z62c50/L/R8BhfOTH3OWlvpvhQwZwUX/uzR5Lov0cRg5boLLnq1OdD/YE9NQOZBhZp1X8aKUCZzu/4NtiBQAeOeWIAMTqBEE1DSwj0cFN8od0DQYNB9+jyKqXxAaFBWImCOHZKoSXhICicg1lFpjljHFkf1gRXILgaD76615npT/pJ0/L73Mw6KodObA628b61JUQtdVYN+iWTGeQ2Mw3jwFby31IztWxQfZVDkatQnfvpaLHU+18vZia3NQiSxHeoi1W/s0c3WuQEAAA=="
    },
    "Metadata": {
     "aws:cdk:path": "ZyviaData/CDKMetadata/Default"
+   }
+  }
+ },
+ "Mappings": {
+  "DatabaseRotationSingleUserSARMapping9AEB3E55": {
+   "aws": {
+    "applicationId": "arn:aws:serverlessrepo:us-east-1:297356227824:applications/SecretsManagerRDSPostgreSQLRotationSingleUser",
+    "semanticVersion": "1.1.618"
+   },
+   "aws-cn": {
+    "applicationId": "arn:aws-cn:serverlessrepo:cn-north-1:193023089310:applications/SecretsManagerRDSPostgreSQLRotationSingleUser",
+    "semanticVersion": "1.1.237"
+   },
+   "aws-us-gov": {
+    "applicationId": "arn:aws-us-gov:serverlessrepo:us-gov-west-1:023102451235:applications/SecretsManagerRDSPostgreSQLRotationSingleUser",
+    "semanticVersion": "1.1.213"
    }
   }
  },

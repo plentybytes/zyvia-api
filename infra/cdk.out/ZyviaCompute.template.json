@@ -253,7 +253,11 @@
        },
        {
         "Name": "OBJECT_STORE_REGION",
-        "Value": "ap-southeast-2"
+        "Value": "ap-south-1"
+       },
+       {
+        "Name": "OBJECT_STORE_ENDPOINT",
+        "Value": "https://s3.ap-south-1.amazonaws.com"
        }
       ],
       "Essential": true,
@@ -313,7 +317,7 @@
          "Ref": "AppLogGroup7D8CD952"
         },
         "awslogs-stream-prefix": "zyvia-api",
-        "awslogs-region": "ap-southeast-2"
+        "awslogs-region": "ap-south-1"
        }
       },
       "Name": "AppContainer",
@@ -392,25 +396,9 @@
     "aws:cdk:path": "ZyviaCompute/Alb/Resource"
    }
   },
-  "AlbHttpsListener2ADA614F": {
+  "AlbHttpListener00C8B33E": {
    "Type": "AWS::ElasticLoadBalancingV2::Listener",
    "Properties": {
-    "Certificates": [
-     {
-      "CertificateArn": {
-       "Fn::Join": [
-        "",
-        [
-         "arn:aws:acm:ap-southeast-2:",
-         {
-          "Ref": "AWS::AccountId"
-         },
-         ":certificate/PLACEHOLDER"
-        ]
-       ]
-      }
-     }
-    ],
     "DefaultActions": [
      {
       "TargetGroupArn": {
@@ -422,34 +410,11 @@
     "LoadBalancerArn": {
      "Ref": "Alb16C2F182"
     },
-    "Port": 443,
-    "Protocol": "HTTPS"
-   },
-   "Metadata": {
-    "aws:cdk:path": "ZyviaCompute/Alb/HttpsListener/Resource"
-   }
-  },
-  "AlbHttpRedirectListener2B61A85C": {
-   "Type": "AWS::ElasticLoadBalancingV2::Listener",
-   "Properties": {
-    "DefaultActions": [
-     {
-      "RedirectConfig": {
-       "Port": "443",
-       "Protocol": "HTTPS",
-       "StatusCode": "HTTP_301"
-      },
-      "Type": "redirect"
-     }
-    ],
-    "LoadBalancerArn": {
-     "Ref": "Alb16C2F182"
-    },
     "Port": 80,
     "Protocol": "HTTP"
    },
    "Metadata": {
-    "aws:cdk:path": "ZyviaCompute/Alb/HttpRedirectListener/Resource"
+    "aws:cdk:path": "ZyviaCompute/Alb/HttpListener/Resource"
    }
   },
   "TargetGroup3D7CD9B8": {
@@ -534,7 +499,7 @@
     }
    },
    "DependsOn": [
-    "AlbHttpsListener2ADA614F",
+    "AlbHttpListener00C8B33E",
     "TaskRoleDefaultPolicy07FC53DE",
     "TaskRole30FC0FBB"
    ],
