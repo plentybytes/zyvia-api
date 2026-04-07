@@ -560,7 +560,7 @@
   "AlbSecurityGroup86A59E99": {
    "Type": "AWS::EC2::SecurityGroup",
    "Properties": {
-    "GroupDescription": "ALB Security Group — allows HTTP from anywhere",
+    "GroupDescription": "ALB Security Group - allows HTTP from anywhere",
     "SecurityGroupEgress": [
      {
       "CidrIp": "0.0.0.0/0",
@@ -588,7 +588,7 @@
   "EcsSecurityGroup44008BF1": {
    "Type": "AWS::EC2::SecurityGroup",
    "Properties": {
-    "GroupDescription": "ECS Security Group — allows port 3000 from ALB only",
+    "GroupDescription": "ECS Security Group - allows port 3000 from ALB only",
     "SecurityGroupEgress": [
      {
       "CidrIp": "0.0.0.0/0",

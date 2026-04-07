@@ -43,15 +43,20 @@ export async function uploadFile(
   }
   const body = Buffer.concat(chunks);
 
-  await client.send(
-    new PutObjectCommand({
-      Bucket: config.objectStore.bucket,
-      Key: key,
-      Body: body,
-      ContentType: mimeType,
-      ServerSideEncryption: 'AES256',
-    }),
-  );
+  const putCommand: any = {
+    Bucket: config.objectStore.bucket,
+    Key: key,
+    Body: body,
+    ContentType: mimeType,
+  };
+
+  // Only add ServerSideEncryption in production (AWS S3)
+  // MinIO doesn't reliably support AES256 encryption
+  if (config.nodeEnv === 'production') {
+    putCommand.ServerSideEncryption = 'AES256';
+  }
+
+  await client.send(new PutObjectCommand(putCommand));
 }
 
 export async function generatePresignedUrl(key: string, ttlSeconds: number): Promise<string> {
