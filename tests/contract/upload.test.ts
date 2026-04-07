@@ -7,31 +7,47 @@
  * These tests mock storage and DB to focus on HTTP contract conformance.
  */
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
-import { buildApp } from '../../src/app.js';
 import type { FastifyInstance } from 'fastify';
 import FormData from 'form-data';
 
-// --- Mocks ---
-vi.mock('../../src/db/connection.js', () => ({
-  db: Object.assign(
-    vi.fn().mockReturnValue({
-      where: vi.fn().mockReturnThis(),
-      whereNull: vi.fn().mockReturnThis(),
-      first: vi.fn().mockResolvedValue(null),
-      insert: vi.fn().mockReturnThis(),
-      returning: vi.fn().mockResolvedValue([{ id: 'test-record-id', created_at: new Date() }]),
-      fn: { now: vi.fn() },
-      raw: vi.fn().mockResolvedValue(undefined),
-    }),
-    { fn: { now: vi.fn() }, raw: vi.fn().mockResolvedValue(undefined) },
-  ),
+vi.mock('../../src/config/index.js', async () => {
+  const { TEST_CONFIG } = await import('../fixtures/test-keys.js');
+  return { config: TEST_CONFIG };
+});
+
+vi.mock('../../src/middleware/auth.js', () => ({
+  requireAuth: vi.fn().mockImplementation(async (
+    request: { headers: Record<string, string>; user: unknown; url: string },
+    reply: { status: (n: number) => { send: (b: unknown) => unknown } },
+  ) => {
+    const header = request.headers.authorization ?? '';
+    const match = header.match(/test-token-(\w+)-(.+)/);
+    if (match) {
+      request.user = { role: match[1], sub: match[2] };
+    } else {
+      return reply.status(401).send({
+        type: 'https://zyvia.api/errors/unauthorized',
+        title: 'Unauthorized',
+        status: 401,
+        detail: 'Invalid or missing authorization token',
+        instance: request.url,
+      });
+    }
+  }),
+  requireAdmin: vi.fn(),
+  assertPatientAccess: vi.fn().mockReturnValue(true),
 }));
 
-vi.mock('../../src/services/storage.service.js', () => ({
-  uploadFile: vi.fn().mockResolvedValue(undefined),
-  generatePresignedUrl: vi.fn().mockResolvedValue('https://example.com/presigned'),
-  checkBucketReachable: vi.fn().mockResolvedValue(undefined),
-  buildStorageKey: vi.fn().mockReturnValue('patients/test/records/id/file.pdf'),
+vi.mock('../../src/db/connection.js', () => ({ db: vi.fn() }));
+
+vi.mock('../../src/services/record.service.js', () => ({
+  createRecord: vi.fn().mockResolvedValue({
+    id: '00000000-test-0000-0000-000000000001',
+    created_at: new Date(),
+    isIdempotentDuplicate: false,
+  }),
+  listRecords: vi.fn(),
+  getRecordById: vi.fn(),
 }));
 
 // --- Helpers ---
@@ -45,33 +61,7 @@ function makeJwt(role: string, sub: string): string {
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  process.env.NODE_ENV = 'test';
-  process.env.DATABASE_URL = 'postgresql://zyvia:zyvia@localhost:5432/zyvia_test';
-  process.env.OBJECT_STORE_ENDPOINT = 'http://localhost:9000';
-  process.env.OBJECT_STORE_BUCKET = 'health-records';
-  process.env.OBJECT_STORE_ACCESS_KEY = 'minioadmin';
-  process.env.OBJECT_STORE_SECRET_KEY = 'minioadmin';
-  process.env.JWT_PUBLIC_KEY_PATH = './keys/dev-public.pem';
-
-  // Mock auth middleware so we can inject any user
-  vi.mock('../../src/middleware/auth.js', () => ({
-    requireAuth: vi.fn().mockImplementation(async (request: { headers: Record<string, string>; user: unknown }) => {
-      const header = request.headers.authorization ?? '';
-      const match = header.match(/test-token-(\w+)-(.+)/);
-      if (match) {
-        request.user = { role: match[1], sub: match[2] };
-      }
-    }),
-    requireAdmin: vi.fn().mockImplementation(async (request: { headers: Record<string, string>; user: unknown }) => {
-      const header = request.headers.authorization ?? '';
-      const match = header.match(/test-token-(\w+)-(.+)/);
-      if (match) {
-        request.user = { role: match[1], sub: match[2] };
-      }
-    }),
-    assertPatientAccess: vi.fn().mockReturnValue(true),
-  }));
-
+  const { buildApp } = await import('../../src/app.js');
   app = await buildApp();
   await app.ready();
 });
@@ -84,7 +74,7 @@ afterAll(async () => {
 describe('POST /v1/upload', () => {
   it('returns 201 with record ID on successful upload', async () => {
     const form = new FormData();
-    form.append('patient_id', 'patient-001');
+    form.append('patient_id', '00000000-0000-0000-0000-000000000001');
     form.append('record_type_id', '3fa85f64-5717-4562-b3fc-2c963f66afa6');
     form.append('file', Buffer.from('%PDF-1.4 test content'), {
       filename: 'test.pdf',
@@ -122,11 +112,8 @@ describe('POST /v1/upload', () => {
   });
 
   it('returns 422 when file type is not supported', async () => {
-    const { assertPatientAccess } = await import('../../src/middleware/auth.js');
-    vi.mocked(assertPatientAccess).mockReturnValue(true);
-
     const form = new FormData();
-    form.append('patient_id', 'patient-001');
+    form.append('patient_id', '00000000-0000-0000-0000-000000000001');
     form.append('record_type_id', '3fa85f64-5717-4562-b3fc-2c963f66afa6');
     form.append('file', Buffer.from('GIF89a...'), {
       filename: 'image.gif',

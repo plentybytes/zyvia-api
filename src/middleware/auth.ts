@@ -8,8 +8,9 @@ export interface AuthUser {
   role: UserRole;
 }
 
-declare module 'fastify' {
-  interface FastifyRequest {
+// Extend @fastify/jwt's own interface so request.user is typed correctly
+declare module '@fastify/jwt' {
+  interface FastifyJWT {
     user: AuthUser;
   }
 }
@@ -17,7 +18,7 @@ declare module 'fastify' {
 export async function requireAuth(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     await request.jwtVerify();
-    const payload = request.user as Record<string, unknown>;
+    const payload = request.user as unknown as Record<string, unknown>;
 
     if (!payload.sub || !payload.role) {
       reply.status(401).send(buildProblem(401, 'Token missing required claims (sub, role)', request.url));

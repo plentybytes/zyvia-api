@@ -9,6 +9,9 @@ import { errorHandler } from './middleware/error-handler.js';
 import { healthRoutes } from './routes/health.js';
 import { recordRoutes } from './routes/records.js';
 import { recordTypeRoutes } from './routes/record-types.js';
+import { authRoutes } from './routes/auth.js';
+import { profileRoutes } from './routes/profile.js';
+import { medicalRoutes } from './routes/medical.js';
 
 export async function buildApp() {
   const fastify = Fastify({
@@ -47,7 +50,9 @@ export async function buildApp() {
   fastify.register(fastifyJwt, {
     secret: {
       public: config.jwt.publicKey,
+      private: config.jwt.privateKey,
     },
+    sign: { algorithm: 'RS256' },
     verify: { algorithms: ['RS256'] },
   });
 
@@ -81,6 +86,9 @@ export async function buildApp() {
   fastify.register(healthRoutes, { prefix: '/v1' });
   fastify.register(recordRoutes, { prefix: '/v1' });
   fastify.register(recordTypeRoutes, { prefix: '/v1' });
+  fastify.register(authRoutes, { prefix: '/v1' });
+  fastify.register(profileRoutes, { prefix: '/v1' });
+  fastify.register(medicalRoutes, { prefix: '/v1' });
 
   return fastify;
 }

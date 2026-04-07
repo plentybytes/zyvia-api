@@ -13,7 +13,8 @@ const configSchema = z.object({
   OBJECT_STORE_SECRET_KEY: z.string().min(1),
   OBJECT_STORE_REGION: z.string().default('us-east-1'),
   JWT_PUBLIC_KEY_PATH: z.string().min(1),
-  JWT_PRIVATE_KEY_PATH: z.string().optional(),
+  JWT_PRIVATE_KEY_PATH: z.string().min(1),
+  ANTHROPIC_API_KEY: z.string().min(1),
 });
 
 const parsed = configSchema.safeParse(process.env);
@@ -52,5 +53,9 @@ export const config = {
     get publicKey() {
       return loadKey(env.JWT_PUBLIC_KEY_PATH);
     },
+    get privateKey() {
+      return loadKey(env.JWT_PRIVATE_KEY_PATH);
+    },
   },
+  anthropicApiKey: env.ANTHROPIC_API_KEY,
 } as const;

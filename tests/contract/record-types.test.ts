@@ -5,13 +5,19 @@
  * TDD: These tests define the expected HTTP contract.
  */
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
-import { buildApp } from '../../src/app.js';
 import type { FastifyInstance } from 'fastify';
+
+vi.mock('../../src/config/index.js', async () => {
+  const { TEST_CONFIG } = await import('../fixtures/test-keys.js');
+  return { config: TEST_CONFIG };
+});
 
 const SEEDED_TYPES = [
   { id: 'rt-001', name: 'Lab Result', description: null, is_active: true, created_at: new Date(), updated_at: new Date() },
   { id: 'rt-002', name: 'Prescription', description: null, is_active: true, created_at: new Date(), updated_at: new Date() },
 ];
+
+vi.mock('../../src/db/connection.js', () => ({ db: vi.fn() }));
 
 vi.mock('../../src/services/record-type.service.js', () => ({
   listRecordTypes: vi.fn().mockResolvedValue(SEEDED_TYPES),
@@ -35,10 +41,23 @@ vi.mock('../../src/services/record-type.service.js', () => ({
 }));
 
 vi.mock('../../src/middleware/auth.js', () => ({
-  requireAuth: vi.fn().mockImplementation(async (request: { headers: Record<string, string>; user: unknown }) => {
+  requireAuth: vi.fn().mockImplementation(async (
+    request: { headers: Record<string, string>; user: unknown; url: string },
+    reply: { status: (n: number) => { send: (b: unknown) => unknown } },
+  ) => {
     const header = request.headers.authorization ?? '';
     const match = header.match(/test-token-(\w+)-(.+)/);
-    if (match) request.user = { role: match[1], sub: match[2] };
+    if (match) {
+      request.user = { role: match[1], sub: match[2] };
+    } else {
+      return reply.status(401).send({
+        type: 'https://zyvia.api/errors/unauthorized',
+        title: 'Unauthorized',
+        status: 401,
+        detail: 'Invalid or missing authorization token',
+        instance: request.url,
+      });
+    }
   }),
   requireAdmin: vi.fn().mockImplementation(async (request: { headers: Record<string, string>; user: unknown }, reply: { status: (n: number) => { send: (b: unknown) => void }; sent: boolean }) => {
     const header = request.headers.authorization ?? '';
@@ -70,14 +89,7 @@ vi.mock('../../src/middleware/auth.js', () => ({
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  process.env.NODE_ENV = 'test';
-  process.env.DATABASE_URL = 'postgresql://zyvia:zyvia@localhost:5432/zyvia_test';
-  process.env.OBJECT_STORE_ENDPOINT = 'http://localhost:9000';
-  process.env.OBJECT_STORE_BUCKET = 'health-records';
-  process.env.OBJECT_STORE_ACCESS_KEY = 'minioadmin';
-  process.env.OBJECT_STORE_SECRET_KEY = 'minioadmin';
-  process.env.JWT_PUBLIC_KEY_PATH = './keys/dev-public.pem';
-
+  const { buildApp } = await import('../../src/app.js');
   app = await buildApp();
   await app.ready();
 });
@@ -200,7 +212,7 @@ describe('PATCH /v1/record-types/:id', () => {
   it('returns 200 when admin soft-deprecates a record type', async () => {
     const res = await app.inject({
       method: 'PATCH',
-      url: '/v1/record-types/rt-001',
+      url: '/v1/record-types/3fa85f64-5717-4562-b3fc-2c963f66afa6',
       headers: {
         authorization: 'test-token-administrator-admin-001',
         'content-type': 'application/json',
@@ -216,7 +228,7 @@ describe('PATCH /v1/record-types/:id', () => {
   it('returns 403 when non-admin tries to update', async () => {
     const res = await app.inject({
       method: 'PATCH',
-      url: '/v1/record-types/rt-001',
+      url: '/v1/record-types/3fa85f64-5717-4562-b3fc-2c963f66afa6',
       headers: {
         authorization: 'test-token-provider-provider-001',
         'content-type': 'application/json',

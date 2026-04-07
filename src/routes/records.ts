@@ -1,12 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { buildProblem } from '../middleware/error-handler.js';
-import { requireAuth, assertPatientAccess } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import * as recordService from '../services/record.service.js';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES } from '../models/health-record.js';
 
 const ListQuerySchema = z.object({
-  patient_id: z.string().min(1).max(255),
+  patient_id: z.string().min(1).max(255).optional(),
   record_type_id: z.string().uuid().optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
@@ -28,13 +28,12 @@ export async function recordRoutes(fastify: FastifyInstance): Promise<void> {
 
       // Parse form fields
       const fields = data.fields as Record<string, { value: string }>;
-      const patientId = fields.patient_id?.value;
       const recordTypeId = fields.record_type_id?.value;
 
-      if (!patientId || !recordTypeId) {
+      if (!recordTypeId) {
         return reply
           .status(422)
-          .send(buildProblem(422, 'patient_id and record_type_id are required fields', request.url));
+          .send(buildProblem(422, 'record_type_id is required', request.url));
       }
 
       // Validate UUID format for record_type_id
@@ -43,9 +42,19 @@ export async function recordRoutes(fastify: FastifyInstance): Promise<void> {
         return reply.status(422).send(buildProblem(422, 'record_type_id must be a valid UUID', request.url));
       }
 
-      // Enforce patient-scoped authorization
-      if (!assertPatientAccess(patientId, request.user, reply, request.url)) {
-        return;
+      // Derive patient_id from JWT for patients; require explicit field for providers
+      let patientId: string;
+      if (request.user.role === 'patient') {
+        patientId = request.user.sub;
+      } else {
+        const formPatientId = fields.patient_id?.value;
+        if (!formPatientId) {
+          return reply.status(422).send(buildProblem(422, 'patient_id is required for provider role', request.url));
+        }
+        if (!uuidRegex.test(formPatientId)) {
+          return reply.status(422).send(buildProblem(422, 'patient_id must be a valid UUID', request.url));
+        }
+        patientId = formPatientId;
       }
 
       // Validate MIME type
@@ -106,14 +115,21 @@ export async function recordRoutes(fastify: FastifyInstance): Promise<void> {
         return reply.status(422).send(buildProblem(422, detail, request.url));
       }
 
-      const { patient_id, record_type_id, cursor, limit } = parseResult.data;
+      const { patient_id: queryPatientId, record_type_id, cursor, limit } = parseResult.data;
 
-      if (!assertPatientAccess(patient_id, request.user, reply, request.url)) {
-        return;
+      // Derive patient_id from JWT for patients; require query param for providers
+      let patientId: string;
+      if (request.user.role === 'patient') {
+        patientId = request.user.sub;
+      } else {
+        if (!queryPatientId) {
+          return reply.status(422).send(buildProblem(422, 'patient_id is required for provider role', request.url));
+        }
+        patientId = queryPatientId;
       }
 
       const result = await recordService.listRecords({
-        patientId: patient_id,
+        patientId,
         recordTypeId: record_type_id,
         cursor,
         limit,
