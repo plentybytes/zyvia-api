@@ -7,6 +7,8 @@ import { DataStack } from '../lib/data-stack';
 import { StorageStack } from '../lib/storage-stack';
 import { ComputeStack } from '../lib/compute-stack';
 import { ObservabilityStack } from '../lib/observability-stack';
+import { OcrComputeStack } from '../lib/ocr-compute-stack';
+import * as sns from 'aws-cdk-lib/aws-sns';
 
 const app = new cdk.App();
 
@@ -47,6 +49,19 @@ const observability = new ObservabilityStack(app, 'ZyviaObservability', {
   targetGroup: compute.targetGroup,
   alertEmail,
 });
+
+// ── zyvia-ocr: OCR microservice (additive — does not modify zyvia-api stacks) ─
+const ocrCompute = new OcrComputeStack(app, 'ZyviaOcrCompute', {
+  env,
+  vpc: network.vpc,
+  publicSubnets: network.publicSubnets,
+  privateSubnets: network.privateSubnets,
+  albSecurityGroup: network.albSecurityGroup,
+  cluster: compute.cluster,
+  alertTopic: sns.Topic.fromTopicArn(app, 'AlertTopic', observability.alertTopicArn),
+  imageTag,
+});
+void ocrCompute;
 
 // Suppress unused variable warning — stacks register themselves with the CDK app
 void observability;
