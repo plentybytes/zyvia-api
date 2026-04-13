@@ -14,11 +14,81 @@ const UpdateBodySchema = z.object({
   is_active: z.boolean().optional(),
 });
 
+const RecordTypeSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    name: { type: 'string', maxLength: 255 },
+    description: { type: 'string', maxLength: 1000, nullable: true },
+    is_active: { type: 'boolean' },
+    created_at: { type: 'string', format: 'date-time' },
+    updated_at: { type: 'string', format: 'date-time' },
+  },
+  required: ['id', 'name', 'is_active', 'created_at', 'updated_at'],
+};
+
+const CreateRecordTypeRequestSchema = {
+  type: 'object',
+  properties: {
+    name: { type: 'string', minLength: 1, maxLength: 255 },
+    description: { type: 'string', maxLength: 1000 },
+  },
+  required: ['name'],
+};
+
+const UpdateRecordTypeRequestSchema = {
+  type: 'object',
+  properties: {
+    description: { type: 'string', maxLength: 1000 },
+    is_active: { type: 'boolean' },
+  },
+};
+
+const ErrorResponseSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', format: 'uri' },
+    title: { type: 'string' },
+    status: { type: 'integer' },
+    detail: { type: 'string' },
+    instance: { type: 'string', format: 'uri' },
+  },
+  required: ['type', 'title', 'status', 'detail', 'instance'],
+};
+
 export async function recordTypeRoutes(fastify: FastifyInstance): Promise<void> {
   // GET /v1/record-types
   fastify.get(
     '/record-types',
-    { preHandler: requireAuth },
+    {
+      preHandler: requireAuth,
+      schema: {
+        description: 'List record types',
+        tags: ['Record Types'],
+        security: [{ bearerAuth: [] }],
+        querystring: {
+          type: 'object',
+          properties: {
+            include_inactive: { type: 'boolean', description: 'Include inactive record types (admin only)' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              data: {
+                type: 'array',
+                items: RecordTypeSchema,
+              },
+            },
+            required: ['data'],
+          },
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
     async (request, reply) => {
       const query = request.query as { include_inactive?: string };
       const includeInactive = query.include_inactive === 'true';
@@ -38,7 +108,23 @@ export async function recordTypeRoutes(fastify: FastifyInstance): Promise<void> 
   // POST /v1/record-types
   fastify.post(
     '/record-types',
-    { preHandler: requireAdmin },
+    {
+      preHandler: requireAdmin,
+      schema: {
+        description: 'Create a new record type',
+        tags: ['Record Types'],
+        security: [{ bearerAuth: [] }],
+        body: CreateRecordTypeRequestSchema,
+        response: {
+          201: RecordTypeSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          409: ErrorResponseSchema,
+          422: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
     async (request, reply) => {
       const parseResult = CreateBodySchema.safeParse(request.body);
       if (!parseResult.success) {
@@ -60,7 +146,30 @@ export async function recordTypeRoutes(fastify: FastifyInstance): Promise<void> 
   // PATCH /v1/record-types/:id
   fastify.patch<{ Params: { id: string } }>(
     '/record-types/:id',
-    { preHandler: requireAdmin },
+    {
+      preHandler: requireAdmin,
+      schema: {
+        description: 'Update a record type',
+        tags: ['Record Types'],
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+          },
+          required: ['id'],
+        },
+        body: UpdateRecordTypeRequestSchema,
+        response: {
+          200: RecordTypeSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          422: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
     async (request, reply) => {
       const { id } = request.params;
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

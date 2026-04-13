@@ -3,12 +3,14 @@ import fastifyMultipart from '@fastify/multipart';
 import fastifyJwt from '@fastify/jwt';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
+import fastifyCors from '@fastify/cors';
 import { randomUUID } from 'crypto';
 import { config } from './config/index.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { healthRoutes } from './routes/health.js';
 import { recordRoutes } from './routes/records.js';
 import { recordTypeRoutes } from './routes/record-types.js';
+import { userRoutes } from './routes/users.js';
 
 export async function buildApp() {
   const fastify = Fastify({
@@ -64,6 +66,9 @@ export async function buildApp() {
     },
   });
 
+  // Register CORS
+  fastify.register(fastifyCors);
+
   // Register OpenAPI docs (development only)
   if (config.nodeEnv !== 'production') {
     await fastify.register(fastifySwagger, {
@@ -86,6 +91,7 @@ export async function buildApp() {
   fastify.register(healthRoutes, { prefix: '/v1' });
   fastify.register(recordRoutes, { prefix: '/v1' });
   fastify.register(recordTypeRoutes, { prefix: '/v1' });
+  fastify.register(userRoutes, { prefix: '/v1' });
 
   return fastify;
 }

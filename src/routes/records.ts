@@ -12,11 +12,114 @@ const ListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+const HealthRecordSummarySchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    patient_id: { type: 'string', maxLength: 255 },
+    record_type: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        name: { type: 'string', maxLength: 255 },
+        description: { type: 'string', nullable: true },
+        is_active: { type: 'boolean' },
+        created_at: { type: 'string', format: 'date-time' },
+        updated_at: { type: 'string', format: 'date-time' },
+      },
+      required: ['id', 'name', 'is_active', 'created_at', 'updated_at'],
+    },
+    file_name: { type: 'string', maxLength: 512 },
+    file_size_bytes: { type: 'integer', minimum: 0 },
+    mime_type: { type: 'string', enum: ALLOWED_MIME_TYPES },
+    created_at: { type: 'string', format: 'date-time' },
+  },
+  required: ['id', 'patient_id', 'record_type', 'file_name', 'file_size_bytes', 'mime_type', 'created_at'],
+};
+
+const HealthRecordDetailSchema = {
+  ...HealthRecordSummarySchema,
+  properties: {
+    ...HealthRecordSummarySchema.properties,
+    download_url: { type: 'string', format: 'uri' },
+    download_url_expires_at: { type: 'string', format: 'date-time' },
+  },
+  required: [...HealthRecordSummarySchema.required, 'download_url', 'download_url_expires_at'],
+};
+
+const ListRecordsResponseSchema = {
+  type: 'object',
+  properties: {
+    data: {
+      type: 'array',
+      items: HealthRecordSummarySchema,
+    },
+    next_cursor: { type: 'string', nullable: true },
+    has_more: { type: 'boolean' },
+  },
+  required: ['data', 'next_cursor', 'has_more'],
+};
+
+const UploadResponseSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    created_at: { type: 'string', format: 'date-time' },
+  },
+  required: ['id', 'created_at'],
+};
+
+const ErrorResponseSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', format: 'uri' },
+    title: { type: 'string' },
+    status: { type: 'integer' },
+    detail: { type: 'string' },
+    instance: { type: 'string', format: 'uri' },
+  },
+  required: ['type', 'title', 'status', 'detail', 'instance'],
+};
+
 export async function recordRoutes(fastify: FastifyInstance): Promise<void> {
   // POST /v1/upload
   fastify.post(
     '/upload',
-    { preHandler: requireAuth },
+    {
+      preHandler: requireAuth,
+      schema: {
+        description: 'Upload a health record file',
+        tags: ['Records'],
+        security: [{ bearerAuth: [] }],
+        consumes: ['multipart/form-data'],
+        body: {
+          type: 'object',
+          properties: {
+            file: { type: 'string', format: 'binary', description: 'File to upload' },
+            patient_id: { type: 'string', maxLength: 255, description: 'Patient identifier' },
+            record_type_id: { type: 'string', format: 'uuid', description: 'Record type UUID' },
+          },
+          required: ['file', 'patient_id', 'record_type_id'],
+        },
+        headers: {
+          type: 'object',
+          properties: {
+            'idempotency-key': { type: 'string', maxLength: 255, description: 'Optional idempotency key' },
+            'content-length': { type: 'integer', description: 'File size in bytes' },
+          },
+        },
+        response: {
+          200: UploadResponseSchema,
+          201: UploadResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          413: ErrorResponseSchema,
+          422: ErrorResponseSchema,
+          503: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
     async (request, reply) => {
       const idempotencyKey = request.headers['idempotency-key'] as string | undefined;
 
@@ -98,7 +201,31 @@ export async function recordRoutes(fastify: FastifyInstance): Promise<void> {
   // GET /v1/records
   fastify.get(
     '/records',
-    { preHandler: requireAuth },
+    {
+      preHandler: requireAuth,
+      schema: {
+        description: 'List health records for a patient',
+        tags: ['Records'],
+        security: [{ bearerAuth: [] }],
+        querystring: {
+          type: 'object',
+          properties: {
+            patient_id: { type: 'string', minLength: 1, maxLength: 255, description: 'Patient identifier' },
+            record_type_id: { type: 'string', format: 'uuid', description: 'Optional record type filter' },
+            cursor: { type: 'string', description: 'Pagination cursor' },
+            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20, description: 'Number of records to return' },
+          },
+          required: ['patient_id'],
+        },
+        response: {
+          200: ListRecordsResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          422: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
     async (request, reply) => {
       const parseResult = ListQuerySchema.safeParse(request.query);
       if (!parseResult.success) {
@@ -126,7 +253,29 @@ export async function recordRoutes(fastify: FastifyInstance): Promise<void> {
   // GET /v1/records/:id
   fastify.get<{ Params: { id: string } }>(
     '/records/:id',
-    { preHandler: requireAuth },
+    {
+      preHandler: requireAuth,
+      schema: {
+        description: 'Get a health record by ID',
+        tags: ['Records'],
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid', description: 'Record ID' },
+          },
+          required: ['id'],
+        },
+        response: {
+          200: HealthRecordDetailSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          422: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
     async (request, reply) => {
       const { id } = request.params;
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

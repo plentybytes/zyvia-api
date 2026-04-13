@@ -18,22 +18,25 @@ src/
 ├── db/
 │   ├── connection.ts        # Knex client
 │   ├── knexfile.ts          # Knex config
-│   ├── migrations/          # 001_record_types, 002_health_records
+│   ├── migrations/          # 001_record_types, 002_health_records, 003_users
 │   └── seeds/               # 001_record_types (8 defaults)
 ├── middleware/
 │   ├── auth.ts              # JWT verify, requireAuth, requireAdmin, assertPatientAccess
 │   └── error-handler.ts     # RFC 7807 Problem Details
 ├── models/
 │   ├── health-record.ts     # HealthRecord types + cursor encode/decode
-│   └── record-type.ts       # RecordType types
+│   ├── record-type.ts       # RecordType types
+│   └── user.ts              # User types and interfaces
 ├── routes/
 │   ├── health.ts            # GET /v1/health, GET /v1/ready
 │   ├── records.ts           # POST /v1/upload, GET /v1/records, GET /v1/records/:id
-│   └── record-types.ts      # GET/POST /v1/record-types, PATCH /v1/record-types/:id
+│   ├── record-types.ts      # GET/POST /v1/record-types, PATCH /v1/record-types/:id
+│   └── users.ts             # POST /v1/users, GET /v1/users, GET /v1/users/:id
 ├── services/
 │   ├── record.service.ts    # createRecord, listRecords, getRecordById
 │   ├── record-type.service.ts
-│   └── storage.service.ts   # S3/MinIO wrapper + presigned URLs
+│   ├── storage.service.ts   # S3/MinIO wrapper + presigned URLs
+│   └── user.service.ts      # User CRUD operations
 └── app.ts                   # Fastify bootstrap
 tests/
 ├── contract/                # HTTP-level tests (mocked services)
@@ -72,6 +75,7 @@ Node.js 20 LTS, TypeScript 5.4 + Fastify 4: strict TypeScript, no `any`,
 RFC 7807 errors throughout, JWT RS256 auth, S3-compatible storage
 
 ## Recent Changes
+- User Management API: Added user creation, listing, and retrieval endpoints with PostgreSQL storage
 - 003-dev-auth-patient-access: Added Node.js 20 LTS + TypeScript 5.4 + Fastify 4, `@fastify/jwt`, Vites
 - 002-aws-ecs-deployment: Added TypeScript 5.4 (CDK infrastructure code); Node.js 20 LTS + aws-cdk-lib ^2.140, constructs ^10,
 

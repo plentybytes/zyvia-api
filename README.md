@@ -38,7 +38,7 @@ npm run dev
 ### Get a test JWT
 Use this same patient id "patient-001" in api input 
 ```bash
-# Provider token
+# Provider token 
 npm run dev:token -- --role provider --sub provider-001
 
 # Patient token
